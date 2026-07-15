@@ -60,7 +60,7 @@ func InitConfig() {
 	Config = AppConfig.ToMap()
 
 	IsPubDualDoorMod = false
-	alog.Log.Println("InitConfig loaded:", AppConfig.Common.Model, AppConfig.Common.SN)
+	alog.Log.Println("Config init done: ok", AppConfig.Common.Model, AppConfig.Common.SN)
 	CreateSnFile(false, AppConfig.Common.SN)
 }
 
@@ -96,7 +96,7 @@ func defaultAgentConfig() AgentConfig {
 func loadINIConfig(fileName string, cfgOut *AgentConfig) bool {
 	cfg, err := config.ReadDefault(fileName)
 	if err != nil {
-		alog.Log.Println("InitConfig: using defaults, config not loaded:", fileName, err)
+		alog.Log.Println("Config load done: fail", fileName, err)
 		return false
 	}
 
@@ -119,7 +119,7 @@ func loadINIConfig(fileName string, cfgOut *AgentConfig) bool {
 	setINIString(cfg, "mqtt", "port", &cfgOut.MQTT.Port)
 	setINIString(cfg, "mqtt", "username", &cfgOut.MQTT.Username)
 	setINIString(cfg, "mqtt", "password", &cfgOut.MQTT.Password)
-	alog.Log.Println("InitConfig: loaded INI config:", fileName)
+	alog.Log.Println("Config load done: ok", fileName)
 	return true
 }
 
@@ -176,22 +176,24 @@ func setFrpIni(fileName, sn string) {
 func CreateSnFile(again bool, strsn string) {
 	if !IsExist("/www/sn.json") {
 		again = true
-		alog.Log.Println("CreateSnFile:exist")
+		alog.Log.Println("SN file init pending: missing /www/sn.json")
 	}
 
 	if again {
 		data := map[string]string{"sn": strsn}
 		content, err := json.Marshal(data)
 		if err != nil {
-			alog.Log.Println("CreateSnFile:json", err)
+			alog.Log.Println("SN file init done: fail json", err)
 			return
 		}
 
 		err = os.WriteFile("/www/sn.json", content, 0644)
 		if err != nil {
-			alog.Log.Println("CreateSnFile:WriteFile", err)
+			alog.Log.Println("SN file init done: fail write", err)
 			return
 		}
-		alog.Log.Println("CreateSnFile:", strsn)
+		alog.Log.Println("SN file init done: ok", strsn)
+		return
 	}
+	alog.Log.Println("SN file init done: ok existing")
 }

@@ -15,16 +15,16 @@ func SerialBridgeStart() {
 	baudRate := serialBaudRate()
 	source, err := openSerialPort(sourceName, baudRate)
 	if err != nil {
-		alog.Log.Println("SerialBridge open source error:", sourceName, err)
+		alog.Log.Println("Serial bridge init done: fail source", sourceName, err)
 		return
 	}
 	target, err := openSerialPort(targetName, baudRate)
 	if err != nil {
-		alog.Log.Println("SerialBridge open target error:", targetName, err)
+		alog.Log.Println("Serial bridge init done: fail target", targetName, err)
 		return
 	}
 
-	alog.Log.Println("SerialBridge started:", sourceName, "->", targetName, "baudrate:", baudRate)
+	alog.Log.Println("Serial bridge init done: ok", sourceName, "->", targetName, "baudrate:", baudRate)
 	buf := make([]byte, 256)
 	for {
 		n, err := source.Read(buf)

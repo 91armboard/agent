@@ -52,9 +52,10 @@ func onMqttMessage(client MQTT.Client, message MQTT.Message) {
 }
 
 func MqttStart(server string, clientid string, username string, password string, topic1 string, topic2 string, qos int) {
-	alog.Log.Println("MQTT START")
+	alog.Log.Println("MQTT init start")
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	lostCh := make(chan error, 1)
 
 	connOpts := MQTT.NewClientOptions().AddBroker(server).SetClientID(clientid).SetCleanSession(true)
 	if username != "" {
@@ -63,11 +64,10 @@ func MqttStart(server string, clientid string, username string, password string,
 			connOpts.SetPassword(password)
 		}
 	}
-	connOpts.MaxReconnectInterval = 60 * time.Second
-	connOpts.AutoReconnect = true
+	connOpts.AutoReconnect = false
 
 	connOpts.OnConnect = func(c MQTT.Client) {
-		alog.Log.Println("MQTT ONCONNECT")
+		alog.Log.Println("MQTT connect done: ok")
 		fatalCnt := 0
 		for {
 			time.Sleep(1 * time.Second)
@@ -102,23 +102,61 @@ func MqttStart(server string, clientid string, username string, password string,
 	}
 
 	connOpts.OnConnectionLost = func(c MQTT.Client, e error) {
-		alog.Log.Println("MQTT CONNECTION LOST:", e)
+		alog.Log.Println("MQTT connection lost:", e)
+		select {
+		case lostCh <- e:
+		default:
+		}
 	}
 
 	client := MQTT.NewClient(connOpts)
 	go onMqttChannel(public.ChMqtt, client)
 
+	failures := 0
 	for {
 		if token := client.Connect(); token.Wait() && token.Error() != nil {
-			time.Sleep(10 * time.Second)
-			alog.Log.Printf("MQTT CONNECT ERROR, RETRY: %v\n", token.Error())
+			failures++
+			delay := mqttRetryDelay(failures)
+			alog.Log.Printf("MQTT connect done: fail attempts=%d next_retry=%s error=%v\n", failures, delay, token.Error())
+			if waitForMqttRetry(c, delay) {
+				return
+			}
 			continue
 		}
-		alog.Log.Printf("MQTT CONNECTED TO %s\n", server)
-		break
-	}
 
-	<-c
+		failures = 0
+		alog.Log.Printf("MQTT connected to %s\n", server)
+		select {
+		case <-c:
+			client.Disconnect(250)
+			return
+		case err := <-lostCh:
+			failures++
+			delay := mqttRetryDelay(failures)
+			alog.Log.Printf("MQTT reconnect pending: attempts=%d next_retry=%s reason=%v\n", failures, delay, err)
+			if waitForMqttRetry(c, delay) {
+				return
+			}
+		}
+	}
+}
+
+func mqttRetryDelay(failures int) time.Duration {
+	if failures > 5 {
+		return 2 * time.Hour
+	}
+	return 30 * time.Minute
+}
+
+func waitForMqttRetry(c chan os.Signal, delay time.Duration) bool {
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+	select {
+	case <-c:
+		return true
+	case <-timer.C:
+		return false
+	}
 }
 
 func InitFFmpeg() {

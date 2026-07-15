@@ -462,29 +462,28 @@ func CheckSdCardMounted() {
 	IsMountedSdCard = false
 	sdCardPath := "/mnt/mmcblk0p1"
 	filePath := sdCardPath + "/sd.txt"
-	if IsExist(filePath) {
-		// Check if the SD card is healthy for write by removing and re-creating the file.
-		if ICheckSdCardCnt < 3 {
-			if err := testWrite(sdCardPath); err != nil {
-				fmt.Println("SD card is not healthy for write:", err)
-				return
-			} else {
-				fmt.Println("SD card is healthy for write:)", ICheckSdCardCnt)
-			}
-			// Check if the SD card is healthy for read by reading the content of the file.
-			if err := testRead(filePath); err != nil {
-				fmt.Println("SD card is not healthy for read:", err)
-				return
-			} else {
-				fmt.Println("SD card is healthy for read:)", ICheckSdCardCnt)
-			}
-		}
-		ICheckSdCardCnt++
-		if ICheckSdCardCnt > 1000 {
-			ICheckSdCardCnt = 0
-		}
-		IsMountedSdCard = true
+	if !IsExist(filePath) {
+		alog.Log.Println("SD card init done: fail not mounted")
+		return
 	}
+
+	if ICheckSdCardCnt < 3 {
+		if err := testWrite(sdCardPath); err != nil {
+			alog.Log.Println("SD card init done: fail write", err)
+			return
+		}
+		if err := testRead(filePath); err != nil {
+			alog.Log.Println("SD card init done: fail read", err)
+			return
+		}
+	}
+
+	ICheckSdCardCnt++
+	if ICheckSdCardCnt > 1000 {
+		ICheckSdCardCnt = 0
+	}
+	IsMountedSdCard = true
+	alog.Log.Println("SD card init done: ok", sdCardPath)
 }
 
 func OpenFile(filename string) (*os.File, error) {

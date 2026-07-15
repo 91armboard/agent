@@ -24,7 +24,7 @@ func onCmdChannel(ch chan string) {
 }
 
 func CmdStart() {
-	alog.Log.Println("Command service started")
+	alog.Log.Println("Command service init done: ok")
 }
 
 func doCmd(action string, sdata string) {
