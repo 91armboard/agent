@@ -3,6 +3,7 @@ package service
 import (
 	alog "agent/logger"
 	"agent/public"
+	"io"
 	"strconv"
 	"time"
 
@@ -27,17 +28,16 @@ func SerialBridgeStart() {
 	buf := make([]byte, 256)
 	for {
 		n, err := source.Read(buf)
-		if err != nil {
-			alog.Log.Println("SerialBridge read error:", err)
-			time.Sleep(time.Second)
+		if n > 0 {
+			if _, err := target.Write(buf[:n]); err != nil {
+				alog.Log.Println("SerialBridge write error:", err)
+			}
+		}
+		if err == nil || err == io.EOF {
 			continue
 		}
-		if n == 0 {
-			continue
-		}
-		if _, err := target.Write(buf[:n]); err != nil {
-			alog.Log.Println("SerialBridge write error:", err)
-		}
+		alog.Log.Println("SerialBridge read error:", err)
+		time.Sleep(time.Second)
 	}
 }
 

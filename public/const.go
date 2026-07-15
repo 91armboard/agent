@@ -44,7 +44,7 @@ const (
 	API_HOST = "device.shop.ijooz.sg"
 	API_AUTH = "BgdLPcVjGtJccE8u6DrGF9ZQiSuMFmzX"
 
-	VERSION = "1.20260715.H"
+	VERSION = "1.20260715.I"
 )
 
 type ApiReturn struct {
