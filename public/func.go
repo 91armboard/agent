@@ -24,10 +24,6 @@ import (
 func SendMqttStatus(cType, cAction, cData, cId string) {
 	if cType == TYPE_DEVICE {
 		ChMqtt <- fmt.Sprintf("%s:%s:%s", CHANNEL_TYPE_MQTT, TOPIC_STATUS_DEVICE+Config["SN"], TYPE_DEVICE+cAction+cData)
-	} else if cType == TYPE_ACTIVITY {
-		ChMqtt <- fmt.Sprintf("%s:%s:%s", CHANNEL_TYPE_MQTT, TOPIC_STATUS_ACTIVITY+cId, TYPE_ACTIVITY+cAction+cData)
-	} else if cType == TYPE_MODELS {
-		ChMqtt <- fmt.Sprintf("%s:%s:%s", CHANNEL_TYPE_MQTT, TOPIC_STATUS_MODELS+Config["MODEL"], TYPE_MODELS+cAction+cData)
 	} else if cType == TYPE_CMD {
 		ChMqtt <- fmt.Sprintf("%s:%s:%s", CHANNEL_TYPE_MQTT, TOPIC_STATUS_CMD+Config["SN"], TYPE_CMD+cAction+cData)
 	} else {
@@ -38,16 +34,10 @@ func SendMqttStatus(cType, cAction, cData, cId string) {
 func SendMqttError(cType string, cErrorCode, cId string) {
 	if cType == TYPE_DEVICE {
 		ChMqtt <- fmt.Sprintf("%s:%s:%s", CHANNEL_TYPE_MQTT, TOPIC_STATUS_DEVICE+Config["SN"], TYPE_DEVICE+ACTION_ERROR+cErrorCode)
-	} else if cType == TYPE_ACTIVITY {
-		ChMqtt <- fmt.Sprintf("%s:%s:%s", CHANNEL_TYPE_MQTT, TOPIC_STATUS_ACTIVITY+cId, TYPE_ACTIVITY+ACTION_ERROR+cErrorCode)
-	} else if cType == TYPE_MODELS {
-		ChMqtt <- fmt.Sprintf("%s:%s:%s", CHANNEL_TYPE_MQTT, TOPIC_STATUS_MODELS+Config["MODEL"], TYPE_MODELS+ACTION_ERROR+cErrorCode)
+	} else if cType == TYPE_CMD {
+		ChMqtt <- fmt.Sprintf("%s:%s:%s", CHANNEL_TYPE_MQTT, TOPIC_STATUS_CMD+Config["SN"], TYPE_CMD+ACTION_ERROR+cErrorCode)
 	} else {
 		ChMqtt <- fmt.Sprintf("%s:%s:%s", CHANNEL_TYPE_MQTT, TOPIC_STATUS_OTHER, TYPE_OTHER+ACTION_ERROR+cErrorCode)
-	}
-	// 判断情况, 来决定是否需要重启
-	if cErrorCode == ERROR_MOUNT_SD || cErrorCode == ERROR_OPEN_DB {
-		// SD卡故障或者读数据库故障, 重启
 	}
 }
 

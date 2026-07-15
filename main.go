@@ -25,7 +25,4 @@ func main() {
 	go service.CmdStart()
 
 	service.MqttStart(server, public.Config["SN"], public.MQTT_USERNAME, public.MQTT_PASSWORD, topic1, topic2, 2)
-	if public.DB != nil {
-		defer public.DB.Close()
-	}
 }
