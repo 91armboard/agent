@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"image/jpeg"
 	"io"
@@ -13,7 +12,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -62,7 +60,7 @@ func HttpRequest(method, url string, data map[string]string) (error, int, []byte
 		return err, 404, nil
 	}
 	request = request.WithContext(ctx)
-	request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36")
+	request.Header.Set("User-Agent", "smartshop-agent/"+VERSION)
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("Connection", "Keep-Alive")
 	request.Header.Set("Auth", API_AUTH)
@@ -138,11 +136,6 @@ func ExecShell(s string) (error, string) {
 		cmd = exec.Command(cmds[0], cmds[1:]...)
 	}
 
-	if runtime.GOOS == "windows" {
-		err := errors.New("windows can not use")
-		return err, ""
-	}
-
 	// Set process group ID for the command to start in a separate process group
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
@@ -180,11 +173,6 @@ func ExecWget(url, outputPath string) (error, string) {
 	//函数返回一个*Cmd，用于使用给出的参数执行name指定的程序
 	alog.Log.Println("ExecWget:", url, outputPath)
 	cmd := exec.Command("wget", url, "-O", outputPath)
-	if runtime.GOOS == "windows" {
-		err := errors.New("windows can not use")
-		return err, ""
-	}
-
 	// Set process group ID for the command to start in a separate process group
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
@@ -223,11 +211,6 @@ func ExecWgetEn(url string) (error, string) {
 	alog.Log.Println("ExecWgetEn:", url)
 	//0404wget -P -N /tmp http://upload.shop.ijooz.sg/agent/md5.upgrade
 	cmd := exec.Command("wget", "-P", "/tmp", url)
-	if runtime.GOOS == "windows" {
-		err := errors.New("windows can not use")
-		return err, ""
-	}
-
 	// Set process group ID for the command to start in a separate process group
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 

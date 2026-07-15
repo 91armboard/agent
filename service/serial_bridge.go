@@ -3,7 +3,6 @@ package service
 import (
 	alog "agent/logger"
 	"agent/public"
-	"runtime"
 	"strconv"
 	"time"
 
@@ -51,9 +50,6 @@ func openSerialPort(name string, baudRate int) (*serial.Port, error) {
 }
 
 func serialBridgePorts() (string, string) {
-	if runtime.GOOS == "windows" {
-		return public.AppConfig.Serial.Serial1Win, public.AppConfig.Serial.Serial2Win
-	}
 	return public.AppConfig.Serial.Serial1, public.AppConfig.Serial.Serial2
 }
 

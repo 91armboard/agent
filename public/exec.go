@@ -33,11 +33,9 @@ type NetworkConfig struct {
 }
 
 type SerialConfig struct {
-	Serial1    string `json:"serial1"`
-	Serial2    string `json:"serial2"`
-	Serial1Win string `json:"serial1_win,omitempty"`
-	Serial2Win string `json:"serial2_win,omitempty"`
-	BaudRate   string `json:"baudrate"`
+	Serial1  string `json:"serial1"`
+	Serial2  string `json:"serial2"`
+	BaudRate string `json:"baudrate"`
 }
 
 type MQTTConfig struct {
@@ -82,11 +80,9 @@ func defaultAgentConfig() AgentConfig {
 			BPort: DEFAULT_B_PORT,
 		},
 		Serial: SerialConfig{
-			Serial1:    DEFAULT_SERIAL1,
-			Serial2:    DEFAULT_SERIAL2,
-			Serial1Win: DEFAULT_SERIAL1_WIN,
-			Serial2Win: DEFAULT_SERIAL2_WIN,
-			BaudRate:   DEFAULT_BAUDRATE,
+			Serial1:  DEFAULT_SERIAL1,
+			Serial2:  DEFAULT_SERIAL2,
+			BaudRate: DEFAULT_BAUDRATE,
 		},
 		MQTT: MQTTConfig{
 			Host:     DEFAULT_MQTT_HOST,
@@ -117,8 +113,6 @@ func loadINIConfig(fileName string, cfgOut *AgentConfig) bool {
 
 	setINIString(cfg, "serial", "serial1", &cfgOut.Serial.Serial1)
 	setINIString(cfg, "serial", "serial2", &cfgOut.Serial.Serial2)
-	setINIString(cfg, "serial", "serial1_win", &cfgOut.Serial.Serial1Win)
-	setINIString(cfg, "serial", "serial2_win", &cfgOut.Serial.Serial2Win)
 	setINIString(cfg, "serial", "baudrate", &cfgOut.Serial.BaudRate)
 
 	setINIString(cfg, "mqtt", "host", &cfgOut.MQTT.Host)
@@ -152,8 +146,6 @@ func (cfg AgentConfig) ToMap() map[string]string {
 		"B_PORT":        cfg.Network.BPort,
 		"SERIAL1":       cfg.Serial.Serial1,
 		"SERIAL2":       cfg.Serial.Serial2,
-		"SERIAL1_WIN":   cfg.Serial.Serial1Win,
-		"SERIAL2_WIN":   cfg.Serial.Serial2Win,
 		"BAUDRATE":      cfg.Serial.BaudRate,
 		"MQTT_HOST":     cfg.MQTT.Host,
 		"MQTT_PORT":     cfg.MQTT.Port,
