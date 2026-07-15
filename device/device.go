@@ -147,10 +147,6 @@ func (cb *CircularBuffer) Get() (byte, error) {
 
 func init() {
 	alog.Log.Println("device.go" + "init()")
-	serialInit()
-	go vserialRec()
-	defer time.AfterFunc(1*time.Second, func() { go serialListen() })
-	//go serialListen()
 }
 
 func serialInit() {
