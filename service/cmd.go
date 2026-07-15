@@ -43,12 +43,12 @@ func CmdStart() {
 func doCmd(action string, sdata string) {
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Println("onCmdChannel 捕获异常:", err)
+			fmt.Println("onCmdChannel recover:", err)
 		}
 	}()
 	alog.Log.Println("DO_CMD", action, sdata)
 	if action == public.CMD_GET_CONFIG {
-		// 获取系统配置
+		// Get system configuration.
 		data := make(map[string]string)
 		data["SN"] = public.Config["SN"]
 		data["MODEL"] = public.Config["MODEL"]
@@ -64,8 +64,8 @@ func doCmd(action string, sdata string) {
 	}
 
 	if action == public.CMD_SET_CONFIG {
-		// TODO 设置配置
-		//如果已经加载了SD卡，尝试从SD卡里读取配置文件
+		// TODO: Replace legacy SD-card configuration writes.
+		// Legacy path: read configuration from the SD card.
 		cfgSdCard, errSdCard := config.ReadDefault(public.GetSdcardPath() + "/config/config.ini")
 		//log.Println(GetSdcardPath() + "/config/config.ini")
 		fmt.Println(errSdCard)
@@ -82,7 +82,7 @@ func doCmd(action string, sdata string) {
 		fmt.Println(err)
 
 		if sdata == "cm=ijooz" {
-			// 配置文件有不同
+			// Legacy config update.
 			alog.Log.Println("CMD_RUN_SHELL", ":change cm type to ijooz")
 			cameraTypeSdCard = "ijooz"
 			cdata := "config common 'common'" + "\n"
@@ -98,7 +98,7 @@ func doCmd(action string, sdata string) {
 			public.ExecShell("reload_config ss_agent")
 			//os.Exit(-1)
 		} else if sdata == "cm=haha" {
-			// 配置文件有不同
+			// Legacy config update.
 			alog.Log.Println("CMD_RUN_SHELL", ":change cm type to haha")
 			cameraTypeSdCard = "haha"
 			cdata := "config common 'common'" + "\n"
@@ -114,7 +114,7 @@ func doCmd(action string, sdata string) {
 			public.ExecShell("reload_config ss_agent")
 			//os.Exit(-1)
 		} else if sdata == "lk=ijooz" {
-			// 配置文件有不同
+			// Legacy config update.
 			alog.Log.Println("CMD_RUN_SHELL", ":change lk type to ijooz")
 			lockTypeSdCard = "ijooz"
 			cdata := "config common 'common'" + "\n"
@@ -130,7 +130,7 @@ func doCmd(action string, sdata string) {
 			public.ExecShell("reload_config ss_agent")
 			//os.Exit(-1)
 		} else if sdata == "lk=haha" {
-			// 配置文件有不同
+			// Legacy config update.
 			alog.Log.Println("CMD_RUN_SHELL", ":change lk type to haha")
 			lockTypeSdCard = "haha"
 			cdata := "config common 'common'" + "\n"
@@ -146,7 +146,7 @@ func doCmd(action string, sdata string) {
 			public.ExecShell("reload_config ss_agent")
 			//os.Exit(-1)
 		} else if sdata == "cnt=2" {
-			// 配置文件有不同
+			// Legacy config update.
 			alog.Log.Println("CMD_RUN_SHELL", ":change lk type to haha")
 			cameraCountSdCard = "2"
 			cdata := "config common 'common'" + "\n"
@@ -162,7 +162,7 @@ func doCmd(action string, sdata string) {
 			public.ExecShell("reload_config ss_agent")
 			//os.Exit(-1)
 		} else if sdata == "cnt=1" {
-			// 配置文件有不同
+			// Legacy config update.
 			alog.Log.Println("CMD_RUN_SHELL", ":change lk type to haha")
 			cameraCountSdCard = "1"
 			cdata := "config common 'common'" + "\n"
@@ -194,7 +194,7 @@ func doCmd(action string, sdata string) {
 	}
 
 	if action == public.CMD_GET_STATUS {
-		// 获取状态
+		// Get device status.
 		data := make(map[string]string)
 		data["CurActivityId"] = device.CurActivityId
 		data["IsOnline"] = strconv.FormatBool(device.IsOnline)
@@ -225,7 +225,7 @@ func doCmd(action string, sdata string) {
 	}
 
 	if action == public.CMD_RUN_SHELL {
-		// 运行Shell
+		// Run shell command.
 		sdata = strings.Replace(string(sdata), "=>", ":", -1)
 		//0404wget http://upload.shop.ijooz.sg/agent/md5.upgrade -P /tmp
 		err, re := public.ExecShell(sdata)
@@ -246,7 +246,7 @@ func doCmd(action string, sdata string) {
 	}
 
 	if action == public.CMD_GET_VERSION {
-		// 获取版本号
+		// Get firmware version.
 		v := public.ACTION_BEGIN
 		alog.Log.Println(v)
 		data := make(map[string]string)
@@ -259,7 +259,7 @@ func doCmd(action string, sdata string) {
 		return
 	}
 	if action == public.CMD_OPEN_LOCK {
-		// 开锁
+		// Legacy lock-open command.
 		data := make(map[string]string)
 		var itype byte
 		if !device.GetIsActivityRunning() {
@@ -295,7 +295,7 @@ func doCmd(action string, sdata string) {
 		return
 	}
 	if action == public.CMD_CLOSE_LOCK {
-		// 关锁
+		// Legacy lock-close command.
 		device.CloseAllLock(0x03)
 		data := make(map[string]string)
 		data["result"] = "done"
@@ -307,7 +307,7 @@ func doCmd(action string, sdata string) {
 		return
 	}
 	if action == public.CMD_SET_LIGHT {
-		// 设置亮度
+		// Legacy light-control command.
 		var err error = errors.New("")
 		if sdata == "0" {
 			err = device.SetLight0()
@@ -334,7 +334,7 @@ func doCmd(action string, sdata string) {
 		return
 	}
 	if action == public.CMD_RESET_CAMERA {
-		// 重启摄像头
+		// Legacy camera-reset command.
 		i, err := strconv.Atoi(sdata)
 		data := make(map[string]string)
 		if err == nil {
@@ -356,7 +356,7 @@ func doCmd(action string, sdata string) {
 		return
 	}
 	if action == public.CMD_CLEAR_ACTIVITY {
-		// 清除活动
+		// Clear legacy activity state.
 		err := device.ClearActivity()
 		data := make(map[string]string)
 		if err == nil {
@@ -372,7 +372,7 @@ func doCmd(action string, sdata string) {
 		return
 	}
 	if action == public.CMD_RESTART {
-		// 重启
+		// Restart CPU.
 		var err error
 		data := make(map[string]string)
 		if err == nil {
@@ -389,7 +389,7 @@ func doCmd(action string, sdata string) {
 		return
 	}
 	if action == public.CMD_RESET_ALL {
-		// 重启
+		// Reset all legacy modules.
 		err := device.ResetAll()
 		data := make(map[string]string)
 		if err == nil {
@@ -405,7 +405,7 @@ func doCmd(action string, sdata string) {
 		return
 	}
 	if action == public.CMD_DOWNLOAD {
-		// 下载更新包
+		// Download upgrade package.
 		data := make(map[string]string)
 		if device.GetIsActivityRunning() {
 			data["result"] = "busy"
@@ -433,7 +433,7 @@ func doCmd(action string, sdata string) {
 		return
 	}
 	if action == public.CMD_UPGRADE {
-		// 更新主控
+		// Upgrade main program.
 		data := make(map[string]string)
 
 		if device.GetIsActivityRunning() && (!device.IsOperationDownByLock && !device.IsOperationDownByLock2) {

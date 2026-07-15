@@ -26,32 +26,32 @@ var (
 	CurActivityId  string
 	MqttActivityId string
 
-	IsOnline         bool // 是否在线
-	IsActivityRuning bool // activity是否正在运行
+	IsOnline         bool // online status
+	IsActivityRuning bool // activity running status
 	IsActivityQueing bool
-	IsSerialing      bool // 是否正在串口通讯中
-	IsLog            bool // 是否记录log
+	IsSerialing      bool // serial port is busy
+	IsLog            bool // serial logging enabled
 
-	IsMPowerOn    bool    // 是否有电（交流电）
-	IsCamraOn     [4]bool // 摄像头1状态
-	IsBuzzerOn    bool    // 蜂鸣器状态
-	Is4GPowOn     bool    // 4G POWER状态
-	IsLockLocked  bool    // 锁状态
-	IsDoorClosed  bool    // 门状态
-	IsLock2Locked bool    // 锁2状态
-	IsDoor2Closed bool    // 门2状态
+	IsMPowerOn    bool    // AC power status
+	IsCamraOn     [4]bool // camera status
+	IsBuzzerOn    bool    // buzzer status
+	Is4GPowOn     bool    // 4G power status
+	IsLockLocked  bool    // lock status
+	IsDoorClosed  bool    // door status
+	IsLock2Locked bool    // second lock status
+	IsDoor2Closed bool    // second door status
 
 	IsADLive   bool //AD board has network response
 	ADOffTimes int
 
 	CamraOffTimes [4]int
-	OfflineTimes  int // 设备离线次数
+	OfflineTimes  int // offline counter
 
-	Temperature float64 // 温度
-	Version     string  //版本号
+	Temperature float64 // temperature
+	Version     string  // firmware version
 
-	lastData         []byte          // 上次数据
-	isCmdReturn      map[string]bool // 命令是否已经返回
+	lastData         []byte          // last serial data
+	isCmdReturn      map[string]bool // command return flags
 	sendSleepTime    time.Duration
 	recvSleepTime    time.Duration
 	recvSleepTimeOut time.Duration
@@ -243,7 +243,7 @@ func serialInit() {
 	ctxVideo = context.Background()
 	videoCmds = make(map[int]*exec.Cmd)
 
-	//打开串口
+	// Open serial ports.
 	var err error
 	p, err = serial.OpenPort(c)
 	if err != nil {
@@ -300,11 +300,11 @@ func vserialRec() {
 	}
 }
 
-// 监听串口消息
+// Listen for legacy serial messages.
 func serialListen() {
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Println("serialListen 捕获异常:", err)
+			fmt.Println("serialListen recover:", err)
 		}
 	}()
 	//return
@@ -344,15 +344,15 @@ func serialListen() {
 			continue
 		}
 
-		// 暂时不处理长度不等于10的数据包
+		// Only handle legacy 10-byte packets.
 		if IsLog {
 			alog.Log.Println("RECV ", hex.EncodeToString(buf[0:10]))
 		}
 		copy(lastData, buf)
 
 		if buf[1] == 0x47 {
-			// G 全局
-			// 获取IO状态
+			// Global command group.
+			// Get IO status.
 			if buf[2] == 0x30 {
 				cmdreturn_mutex.Lock()
 				isCmdReturn[string([]byte{buf[1], buf[2]})] = true
@@ -397,7 +397,7 @@ func serialListen() {
 					IsLockLocked = !IsLockLocked
 				}
 
-				var IsCamraOnTmp [4]bool // 摄像头1状态
+				var IsCamraOnTmp [4]bool // camera status
 				IsCamraOnTmp[0] = true
 				if io|0b00010000 == io {
 					IsCamraOnTmp[0] = false
@@ -476,11 +476,11 @@ func serialListen() {
 					alog.Log.Println(tempstr)
 					alog.Log.Println("IO_STATUS:", strDoorStatus, strLockStatus, Is4GPowOn, IsBuzzerOn, IsCamraOnTmp[0], IsCamraOnTmp[1], IsCamraOnTmp[2], IsCamraOnTmp[3], strDoor2Status, strLock2Status)
 				}
-			} else if buf[2] == 0x31 { // 获取RTC
+			} else if buf[2] == 0x31 { // Get RTC.
 				cmdreturn_mutex.Lock()
 				isCmdReturn[string([]byte{buf[1], buf[2]})] = true
 				cmdreturn_mutex.Unlock()
-			} else if buf[2] == 0x32 { // 获取温度
+			} else if buf[2] == 0x32 { // Get temperature.
 				cmdreturn_mutex.Lock()
 				isCmdReturn[string([]byte{buf[1], buf[2]})] = true
 				cmdreturn_mutex.Unlock()
@@ -491,7 +491,7 @@ func serialListen() {
 				}
 				Temperature = float64(temp) / 100
 				alog.Log.Println("Temperature: ", Temperature)
-			} else if buf[2] == 0x33 { // 获取版本号
+			} else if buf[2] == 0x33 { // Get firmware version.
 				cmdreturn_mutex.Lock()
 				isCmdReturn[string([]byte{buf[1], buf[2]})] = true
 				cmdreturn_mutex.Unlock()
@@ -499,50 +499,50 @@ func serialListen() {
 				alog.Log.Println("Version: ", Version)
 			}
 		} else if buf[1] == 0x4C {
-			// L 锁开关
+			// Lock command group.
 			cmdreturn_mutex.Lock()
 			if buf[2] == 0x30 {
-				// 关锁，完成关锁
+				// Close lock command completed.
 				isCmdReturn[string([]byte{buf[1], buf[2]})] = true
 			} else if buf[2] == 0x31 {
-				// 开锁
+				// Open lock command completed.
 				isCmdReturn[string([]byte{buf[1], buf[2]})] = true
 			} else if buf[2] == 0x32 {
-				// 带条件开锁
+				// Conditional open-lock command completed.
 				isCmdReturn[string([]byte{buf[1], buf[2]})] = true
 			} else if buf[2] == 0x34 {
-				// 关锁，完成关锁
+				// Close lock command completed.
 				isCmdReturn[string([]byte{buf[1], buf[2]})] = true
 			} else if buf[2] == 0x35 {
-				// 开锁
+				// Open lock command completed.
 				isCmdReturn[string([]byte{buf[1], buf[2]})] = true
 			} else if buf[2] == 0x36 {
-				// 带条件开锁
+				// Conditional open-lock command completed.
 				isCmdReturn[string([]byte{buf[1], buf[2]})] = true
 			}
 			cmdreturn_mutex.Unlock()
 		} else if buf[1] == 0x56 {
-			// V 控制摄像头电源 或者 LED亮度
+			// Camera power or LED brightness command group.
 			cmdreturn_mutex.Lock()
 			isCmdReturn[string([]byte{buf[1], buf[2]})] = true
 			cmdreturn_mutex.Unlock()
 		} else if buf[1] == 0x50 {
-			// P 4G模块电源
+			// 4G module power command group.
 			cmdreturn_mutex.Lock()
 			isCmdReturn[string([]byte{buf[1], buf[2]})] = true
 			cmdreturn_mutex.Unlock()
 		} else if buf[1] == 0x4D {
-			// P 主控电源
+			// Main controller power command group.
 			cmdreturn_mutex.Lock()
 			isCmdReturn[string([]byte{buf[1], buf[2]})] = true
 			cmdreturn_mutex.Unlock()
 		} else if buf[1] == 0x5A {
-			// P 蜂鸣器
+			// Buzzer command group.
 			cmdreturn_mutex.Lock()
 			isCmdReturn[string([]byte{buf[1], buf[2]})] = true
 			cmdreturn_mutex.Unlock()
 		} else if buf[1] == 0x53 {
-			// S 设置
+			// Settings command group.
 			cmdreturn_mutex.Lock()
 			isCmdReturn[string([]byte{buf[1], buf[2]})] = true
 			cmdreturn_mutex.Unlock()

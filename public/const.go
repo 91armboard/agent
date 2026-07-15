@@ -159,7 +159,7 @@ const (
 	//GPIO_LOCK_OPEN      = 1
 	//GPIO_LOCK_CLOSE     = 0
 
-	VERSION = "1.20260715.A"
+	VERSION = "1.20260715.B"
 )
 
 type ApiReturn struct {
