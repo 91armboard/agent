@@ -8,6 +8,8 @@ import (
 )
 
 func main() {
+	fmt.Println("ss_main version:", public.VERSION)
+
 	defer func() {
 		if err := recover(); err != nil {
 			fmt.Println("main recover:", err)
