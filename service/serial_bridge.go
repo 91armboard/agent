@@ -10,11 +10,6 @@ import (
 	"github.com/tarm/serial"
 )
 
-const (
-	serial1Win = "COM3"
-	serial2Win = "COM4"
-)
-
 func SerialBridgeStart() {
 	sourceName, targetName := serialBridgePorts()
 	baudRate := serialBaudRate()
@@ -57,7 +52,7 @@ func openSerialPort(name string, baudRate int) (*serial.Port, error) {
 
 func serialBridgePorts() (string, string) {
 	if runtime.GOOS == "windows" {
-		return serial1Win, serial2Win
+		return public.AppConfig.Serial.Serial1Win, public.AppConfig.Serial.Serial2Win
 	}
 	return public.AppConfig.Serial.Serial1, public.AppConfig.Serial.Serial2
 }
