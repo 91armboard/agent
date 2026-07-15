@@ -52,7 +52,6 @@ func doCmd(action string, sdata string) {
 			"MQTT_USERNAME": public.Config["MQTT_USERNAME"],
 		})
 	case public.CMD_RUN_SHELL:
-		sdata = strings.Replace(sdata, "=>", ":", -1)
 		err, output := public.ExecShell(sdata)
 		result := "false"
 		if err == nil {
@@ -66,7 +65,6 @@ func doCmd(action string, sdata string) {
 	case public.CMD_UPGRADE:
 		runScriptCommand(action, "/etc/smartshop_go/upgrade.sh")
 	case public.CMD_WGET_DNLOAD:
-		sdata = strings.Replace(sdata, "=>", ":", -1)
 		err, output := public.ExecWgetEn(sdata)
 		result := "false"
 		if err == nil {
@@ -95,6 +93,5 @@ func sendCmdResult(action string, data map[string]string) {
 		alog.Log.Println("sendCmdResult marshal error:", err)
 		return
 	}
-	dataStr2 := strings.Replace(string(dataStr), ":", "=>", -1)
-	public.SendMqttStatus(public.TYPE_CMD, action, dataStr2, "")
+	public.SendMqttStatus(public.TYPE_CMD, action, string(dataStr), "")
 }

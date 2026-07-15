@@ -20,28 +20,98 @@ func init() {
 func InitConfig() {
 	Config = defaultConfig()
 
-	cfg, err := config.ReadDefault(CONFIG_FILE_PATH)
-	if err != nil {
-		alog.Log.Println("InitConfig: using defaults, config not loaded:", CONFIG_FILE_PATH, err)
+	if err := loadJSONConfig(CONFIG_JSON_FILE_PATH); err == nil {
+		alog.Log.Println("InitConfig: loaded JSON config:", CONFIG_JSON_FILE_PATH)
 	} else {
-		readConfigValue(cfg, "common", "model", "MODEL")
-		readConfigValue(cfg, "common", "sn", "SN")
-		readConfigValue(cfg, "network", "a_ip", "A_IP")
-		readConfigValue(cfg, "network", "a_port", "A_PORT")
-		readConfigValue(cfg, "network", "b_ip", "B_IP")
-		readConfigValue(cfg, "network", "b_port", "B_PORT")
-		readConfigValue(cfg, "serial", "serial1", "SERIAL1")
-		readConfigValue(cfg, "serial", "serial2", "SERIAL2")
-		readConfigValue(cfg, "serial", "baudrate", "BAUDRATE")
-		readConfigValue(cfg, "mqtt", "host", "MQTT_HOST")
-		readConfigValue(cfg, "mqtt", "port", "MQTT_PORT")
-		readConfigValue(cfg, "mqtt", "username", "MQTT_USERNAME")
-		readConfigValue(cfg, "mqtt", "password", "MQTT_PASSWORD")
+		alog.Log.Println("InitConfig: JSON config not loaded:", CONFIG_JSON_FILE_PATH, err)
+		loadINIConfig(CONFIG_FILE_PATH)
 	}
 
 	IsPubDualDoorMod = false
 	alog.Log.Println("InitConfig loaded:", Config["MODEL"], Config["SN"])
 	CreateSnFile(false, Config["SN"])
+}
+
+type AgentConfigFile struct {
+	Common  CommonConfig  `json:"common"`
+	Network NetworkConfig `json:"network"`
+	Serial  SerialConfig  `json:"serial"`
+	MQTT    MQTTConfig    `json:"mqtt"`
+}
+
+type CommonConfig struct {
+	Model string `json:"model"`
+	SN    string `json:"sn"`
+}
+
+type NetworkConfig struct {
+	AIP   string `json:"a_ip"`
+	APort string `json:"a_port"`
+	BIP   string `json:"b_ip"`
+	BPort string `json:"b_port"`
+}
+
+type SerialConfig struct {
+	Serial1  string `json:"serial1"`
+	Serial2  string `json:"serial2"`
+	BaudRate string `json:"baudrate"`
+}
+
+type MQTTConfig struct {
+	Host     string `json:"host"`
+	Port     string `json:"port"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+func loadJSONConfig(fileName string) error {
+	content, err := os.ReadFile(fileName)
+	if err != nil {
+		return err
+	}
+
+	var cfg AgentConfigFile
+	if err := json.Unmarshal(content, &cfg); err != nil {
+		return err
+	}
+
+	setConfigValue("MODEL", cfg.Common.Model)
+	setConfigValue("SN", cfg.Common.SN)
+	setConfigValue("A_IP", cfg.Network.AIP)
+	setConfigValue("A_PORT", cfg.Network.APort)
+	setConfigValue("B_IP", cfg.Network.BIP)
+	setConfigValue("B_PORT", cfg.Network.BPort)
+	setConfigValue("SERIAL1", cfg.Serial.Serial1)
+	setConfigValue("SERIAL2", cfg.Serial.Serial2)
+	setConfigValue("BAUDRATE", cfg.Serial.BaudRate)
+	setConfigValue("MQTT_HOST", cfg.MQTT.Host)
+	setConfigValue("MQTT_PORT", cfg.MQTT.Port)
+	setConfigValue("MQTT_USERNAME", cfg.MQTT.Username)
+	setConfigValue("MQTT_PASSWORD", cfg.MQTT.Password)
+	return nil
+}
+
+func loadINIConfig(fileName string) {
+	cfg, err := config.ReadDefault(fileName)
+	if err != nil {
+		alog.Log.Println("InitConfig: using defaults, INI config not loaded:", fileName, err)
+		return
+	}
+
+	readConfigValue(cfg, "common", "model", "MODEL")
+	readConfigValue(cfg, "common", "sn", "SN")
+	readConfigValue(cfg, "network", "a_ip", "A_IP")
+	readConfigValue(cfg, "network", "a_port", "A_PORT")
+	readConfigValue(cfg, "network", "b_ip", "B_IP")
+	readConfigValue(cfg, "network", "b_port", "B_PORT")
+	readConfigValue(cfg, "serial", "serial1", "SERIAL1")
+	readConfigValue(cfg, "serial", "serial2", "SERIAL2")
+	readConfigValue(cfg, "serial", "baudrate", "BAUDRATE")
+	readConfigValue(cfg, "mqtt", "host", "MQTT_HOST")
+	readConfigValue(cfg, "mqtt", "port", "MQTT_PORT")
+	readConfigValue(cfg, "mqtt", "username", "MQTT_USERNAME")
+	readConfigValue(cfg, "mqtt", "password", "MQTT_PASSWORD")
+	alog.Log.Println("InitConfig: loaded INI config:", fileName)
 }
 
 func defaultConfig() map[string]string {
@@ -64,8 +134,15 @@ func defaultConfig() map[string]string {
 
 func readConfigValue(cfg *config.Config, section string, option string, key string) {
 	value, err := cfg.String(section, option)
-	if err == nil && strings.TrimSpace(value) != "" {
-		Config[key] = strings.TrimSpace(value)
+	if err == nil {
+		setConfigValue(key, value)
+	}
+}
+
+func setConfigValue(key string, value string) {
+	value = strings.TrimSpace(value)
+	if value != "" {
+		Config[key] = value
 	}
 }
 

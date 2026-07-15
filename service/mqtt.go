@@ -42,7 +42,6 @@ func onMqttMessage(client MQTT.Client, message MQTT.Message) {
 	sAction := string(msg[2:4])
 	sData := string(msg[4:])
 	if sType == public.TYPE_CMD {
-		sData = strings.Replace(sData, ":", "=>", -1)
 		public.ChCmd <- fmt.Sprintf("%s:%s", sAction, sData)
 		alog.Log.Println("TYPE_CMD:", sAction, sData)
 		return
@@ -96,8 +95,7 @@ func MqttStart(server string, clientid string, username string, password string,
 			}
 			dataStr, err := json.Marshal(&data)
 			if err == nil {
-				dataStr2 := strings.Replace(string(dataStr), ":", "=>", -1)
-				public.SendMqttStatus(public.TYPE_DEVICE, public.ACTION_STARTRUN, dataStr2, "")
+				public.SendMqttStatus(public.TYPE_DEVICE, public.ACTION_STARTRUN, string(dataStr), "")
 			}
 			alog.Log.Println("Inform agent is running by MQTT")
 		})
