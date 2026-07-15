@@ -37,20 +37,7 @@ func doCmd(action string, sdata string) {
 	alog.Log.Println("DO_CMD", action, sdata)
 	switch action {
 	case public.CMD_GET_CONFIG:
-		sendCmdResult(action, map[string]string{
-			"SN":            public.Config["SN"],
-			"MODEL":         public.Config["MODEL"],
-			"A_IP":          public.Config["A_IP"],
-			"A_PORT":        public.Config["A_PORT"],
-			"B_IP":          public.Config["B_IP"],
-			"B_PORT":        public.Config["B_PORT"],
-			"SERIAL1":       public.Config["SERIAL1"],
-			"SERIAL2":       public.Config["SERIAL2"],
-			"BAUDRATE":      public.Config["BAUDRATE"],
-			"MQTT_HOST":     public.Config["MQTT_HOST"],
-			"MQTT_PORT":     public.Config["MQTT_PORT"],
-			"MQTT_USERNAME": public.Config["MQTT_USERNAME"],
-		})
+		sendCmdResult(action, public.AppConfig)
 	case public.CMD_RUN_SHELL:
 		err, output := public.ExecShell(sdata)
 		result := "false"
@@ -87,7 +74,7 @@ func runScriptCommand(action string, script string) {
 	sendCmdResult(action, map[string]string{"result": result})
 }
 
-func sendCmdResult(action string, data map[string]string) {
+func sendCmdResult(action string, data interface{}) {
 	dataStr, err := json.Marshal(&data)
 	if err != nil {
 		alog.Log.Println("sendCmdResult marshal error:", err)

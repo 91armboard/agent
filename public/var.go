@@ -23,5 +23,6 @@ var (
 
 	IsPubDualDoorMod bool
 
-	Config map[string]string
+	AppConfig AgentConfig
+	Config    map[string]string
 )

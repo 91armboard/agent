@@ -59,11 +59,11 @@ func serialBridgePorts() (string, string) {
 	if runtime.GOOS == "windows" {
 		return serial1Win, serial2Win
 	}
-	return public.Config["SERIAL1"], public.Config["SERIAL2"]
+	return public.AppConfig.Serial.Serial1, public.AppConfig.Serial.Serial2
 }
 
 func serialBaudRate() int {
-	baudRate, err := strconv.Atoi(public.Config["BAUDRATE"])
+	baudRate, err := strconv.Atoi(public.AppConfig.Serial.BaudRate)
 	if err != nil || baudRate <= 0 {
 		return 115200
 	}

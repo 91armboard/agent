@@ -23,8 +23,7 @@ const (
 
 	CHANNEL_TYPE_MQTT = "MQTT"
 
-	CONFIG_FILE_PATH      = "/etc/smartshop_go/config/config.ini"
-	CONFIG_JSON_FILE_PATH = "/etc/smartshop_go/config/config.json"
+	CONFIG_FILE_PATH = "/etc/smartshop_go/config/config.ini"
 
 	DEFAULT_SN       = "SN99999"
 	DEFAULT_MODEL    = "AGENT-MT7621"
@@ -44,7 +43,7 @@ const (
 	API_HOST = "device.shop.ijooz.sg"
 	API_AUTH = "BgdLPcVjGtJccE8u6DrGF9ZQiSuMFmzX"
 
-	VERSION = "1.20260715.E"
+	VERSION = "1.20260715.F"
 )
 
 type ApiReturn struct {

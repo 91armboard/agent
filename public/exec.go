@@ -10,29 +10,7 @@ import (
 	"github.com/larspensjo/config"
 )
 
-func init() {
-	ChMqtt = make(chan string)
-	ChActivity = make(chan string)
-	ChUpload = make(chan string)
-	ChCmd = make(chan string)
-}
-
-func InitConfig() {
-	Config = defaultConfig()
-
-	if err := loadJSONConfig(CONFIG_JSON_FILE_PATH); err == nil {
-		alog.Log.Println("InitConfig: loaded JSON config:", CONFIG_JSON_FILE_PATH)
-	} else {
-		alog.Log.Println("InitConfig: JSON config not loaded:", CONFIG_JSON_FILE_PATH, err)
-		loadINIConfig(CONFIG_FILE_PATH)
-	}
-
-	IsPubDualDoorMod = false
-	alog.Log.Println("InitConfig loaded:", Config["MODEL"], Config["SN"])
-	CreateSnFile(false, Config["SN"])
-}
-
-type AgentConfigFile struct {
+type AgentConfig struct {
 	Common  CommonConfig  `json:"common"`
 	Network NetworkConfig `json:"network"`
 	Serial  SerialConfig  `json:"serial"`
@@ -40,8 +18,11 @@ type AgentConfigFile struct {
 }
 
 type CommonConfig struct {
-	Model string `json:"model"`
-	SN    string `json:"sn"`
+	Model       string `json:"model"`
+	SN          string `json:"sn"`
+	CameraType  string `json:"camera_type,omitempty"`
+	CameraCount string `json:"camera_count,omitempty"`
+	LockType    string `json:"lock_type,omitempty"`
 }
 
 type NetworkConfig struct {
@@ -61,88 +42,112 @@ type MQTTConfig struct {
 	Host     string `json:"host"`
 	Port     string `json:"port"`
 	Username string `json:"username"`
-	Password string `json:"password"`
+	Password string `json:"-"`
 }
 
-func loadJSONConfig(fileName string) error {
-	content, err := os.ReadFile(fileName)
-	if err != nil {
-		return err
-	}
-
-	var cfg AgentConfigFile
-	if err := json.Unmarshal(content, &cfg); err != nil {
-		return err
-	}
-
-	setConfigValue("MODEL", cfg.Common.Model)
-	setConfigValue("SN", cfg.Common.SN)
-	setConfigValue("A_IP", cfg.Network.AIP)
-	setConfigValue("A_PORT", cfg.Network.APort)
-	setConfigValue("B_IP", cfg.Network.BIP)
-	setConfigValue("B_PORT", cfg.Network.BPort)
-	setConfigValue("SERIAL1", cfg.Serial.Serial1)
-	setConfigValue("SERIAL2", cfg.Serial.Serial2)
-	setConfigValue("BAUDRATE", cfg.Serial.BaudRate)
-	setConfigValue("MQTT_HOST", cfg.MQTT.Host)
-	setConfigValue("MQTT_PORT", cfg.MQTT.Port)
-	setConfigValue("MQTT_USERNAME", cfg.MQTT.Username)
-	setConfigValue("MQTT_PASSWORD", cfg.MQTT.Password)
-	return nil
+func init() {
+	ChMqtt = make(chan string)
+	ChActivity = make(chan string)
+	ChUpload = make(chan string)
+	ChCmd = make(chan string)
 }
 
-func loadINIConfig(fileName string) {
+func InitConfig() {
+	AppConfig = defaultAgentConfig()
+	loadINIConfig(CONFIG_FILE_PATH, &AppConfig)
+	Config = AppConfig.ToMap()
+
+	IsPubDualDoorMod = false
+	alog.Log.Println("InitConfig loaded:", AppConfig.Common.Model, AppConfig.Common.SN)
+	CreateSnFile(false, AppConfig.Common.SN)
+}
+
+func defaultAgentConfig() AgentConfig {
+	return AgentConfig{
+		Common: CommonConfig{
+			Model:       DEFAULT_MODEL,
+			SN:          DEFAULT_SN,
+			CameraType:  "haha",
+			CameraCount: "2",
+			LockType:    "haha",
+		},
+		Network: NetworkConfig{
+			AIP:   DEFAULT_A_IP,
+			APort: DEFAULT_A_PORT,
+			BIP:   DEFAULT_B_IP,
+			BPort: DEFAULT_B_PORT,
+		},
+		Serial: SerialConfig{
+			Serial1:  DEFAULT_SERIAL1,
+			Serial2:  DEFAULT_SERIAL2,
+			BaudRate: DEFAULT_BAUDRATE,
+		},
+		MQTT: MQTTConfig{
+			Host:     DEFAULT_MQTT_HOST,
+			Port:     DEFAULT_MQTT_PORT,
+			Username: DEFAULT_MQTT_USERNAME,
+			Password: DEFAULT_MQTT_PASSWORD,
+		},
+	}
+}
+
+func loadINIConfig(fileName string, cfgOut *AgentConfig) {
 	cfg, err := config.ReadDefault(fileName)
 	if err != nil {
-		alog.Log.Println("InitConfig: using defaults, INI config not loaded:", fileName, err)
+		alog.Log.Println("InitConfig: using defaults, config not loaded:", fileName, err)
 		return
 	}
 
-	readConfigValue(cfg, "common", "model", "MODEL")
-	readConfigValue(cfg, "common", "sn", "SN")
-	readConfigValue(cfg, "network", "a_ip", "A_IP")
-	readConfigValue(cfg, "network", "a_port", "A_PORT")
-	readConfigValue(cfg, "network", "b_ip", "B_IP")
-	readConfigValue(cfg, "network", "b_port", "B_PORT")
-	readConfigValue(cfg, "serial", "serial1", "SERIAL1")
-	readConfigValue(cfg, "serial", "serial2", "SERIAL2")
-	readConfigValue(cfg, "serial", "baudrate", "BAUDRATE")
-	readConfigValue(cfg, "mqtt", "host", "MQTT_HOST")
-	readConfigValue(cfg, "mqtt", "port", "MQTT_PORT")
-	readConfigValue(cfg, "mqtt", "username", "MQTT_USERNAME")
-	readConfigValue(cfg, "mqtt", "password", "MQTT_PASSWORD")
+	setINIString(cfg, "common", "model", &cfgOut.Common.Model)
+	setINIString(cfg, "common", "sn", &cfgOut.Common.SN)
+	setINIString(cfg, "common", "camera_type", &cfgOut.Common.CameraType)
+	setINIString(cfg, "common", "camera_count", &cfgOut.Common.CameraCount)
+	setINIString(cfg, "common", "lock_type", &cfgOut.Common.LockType)
+
+	setINIString(cfg, "network", "a_ip", &cfgOut.Network.AIP)
+	setINIString(cfg, "network", "a_port", &cfgOut.Network.APort)
+	setINIString(cfg, "network", "b_ip", &cfgOut.Network.BIP)
+	setINIString(cfg, "network", "b_port", &cfgOut.Network.BPort)
+
+	setINIString(cfg, "serial", "serial1", &cfgOut.Serial.Serial1)
+	setINIString(cfg, "serial", "serial2", &cfgOut.Serial.Serial2)
+	setINIString(cfg, "serial", "baudrate", &cfgOut.Serial.BaudRate)
+
+	setINIString(cfg, "mqtt", "host", &cfgOut.MQTT.Host)
+	setINIString(cfg, "mqtt", "port", &cfgOut.MQTT.Port)
+	setINIString(cfg, "mqtt", "username", &cfgOut.MQTT.Username)
+	setINIString(cfg, "mqtt", "password", &cfgOut.MQTT.Password)
 	alog.Log.Println("InitConfig: loaded INI config:", fileName)
 }
 
-func defaultConfig() map[string]string {
-	return map[string]string{
-		"SN":            DEFAULT_SN,
-		"MODEL":         DEFAULT_MODEL,
-		"A_IP":          DEFAULT_A_IP,
-		"A_PORT":        DEFAULT_A_PORT,
-		"B_IP":          DEFAULT_B_IP,
-		"B_PORT":        DEFAULT_B_PORT,
-		"SERIAL1":       DEFAULT_SERIAL1,
-		"SERIAL2":       DEFAULT_SERIAL2,
-		"BAUDRATE":      DEFAULT_BAUDRATE,
-		"MQTT_HOST":     DEFAULT_MQTT_HOST,
-		"MQTT_PORT":     DEFAULT_MQTT_PORT,
-		"MQTT_USERNAME": DEFAULT_MQTT_USERNAME,
-		"MQTT_PASSWORD": DEFAULT_MQTT_PASSWORD,
-	}
-}
-
-func readConfigValue(cfg *config.Config, section string, option string, key string) {
+func setINIString(cfg *config.Config, section string, option string, target *string) {
 	value, err := cfg.String(section, option)
 	if err == nil {
-		setConfigValue(key, value)
+		value = strings.TrimSpace(value)
+		if value != "" {
+			*target = value
+		}
 	}
 }
 
-func setConfigValue(key string, value string) {
-	value = strings.TrimSpace(value)
-	if value != "" {
-		Config[key] = value
+func (cfg AgentConfig) ToMap() map[string]string {
+	return map[string]string{
+		"SN":            cfg.Common.SN,
+		"MODEL":         cfg.Common.Model,
+		"CAMERA_TYPE":   cfg.Common.CameraType,
+		"CAMERA_COUNT":  cfg.Common.CameraCount,
+		"LOCK_TYPE":     cfg.Common.LockType,
+		"A_IP":          cfg.Network.AIP,
+		"A_PORT":        cfg.Network.APort,
+		"B_IP":          cfg.Network.BIP,
+		"B_PORT":        cfg.Network.BPort,
+		"SERIAL1":       cfg.Serial.Serial1,
+		"SERIAL2":       cfg.Serial.Serial2,
+		"BAUDRATE":      cfg.Serial.BaudRate,
+		"MQTT_HOST":     cfg.MQTT.Host,
+		"MQTT_PORT":     cfg.MQTT.Port,
+		"MQTT_USERNAME": cfg.MQTT.Username,
+		"MQTT_PASSWORD": cfg.MQTT.Password,
 	}
 }
 
