@@ -23,14 +23,27 @@ const (
 
 	CHANNEL_TYPE_MQTT = "MQTT"
 
-	API_HOST      = "device.shop.ijooz.sg"
-	API_AUTH      = "BgdLPcVjGtJccE8u6DrGF9ZQiSuMFmzX"
-	MQTT_HOST     = "mqtt.shop.ijooz.sg"
-	MQTT_PORT     = "1883"
-	MQTT_USERNAME = "agent"
-	MQTT_PASSWORD = "ZdqRI5U9ZqPmNguG"
+	CONFIG_FILE_PATH = "/etc/smartshop_go/config/config.ini"
 
-	VERSION = "1.20260715.C"
+	DEFAULT_SN       = "SN99999"
+	DEFAULT_MODEL    = "AGENT-MT7621"
+	DEFAULT_A_IP     = "192.168.16.8"
+	DEFAULT_A_PORT   = "5000"
+	DEFAULT_B_IP     = "192.168.188.123"
+	DEFAULT_B_PORT   = "5000"
+	DEFAULT_SERIAL1  = "/dev/ttyS1"
+	DEFAULT_SERIAL2  = "/dev/ttyS2"
+	DEFAULT_BAUDRATE = "115200"
+
+	DEFAULT_MQTT_HOST     = "mqtt.shop.ijooz.sg"
+	DEFAULT_MQTT_PORT     = "1883"
+	DEFAULT_MQTT_USERNAME = "agent"
+	DEFAULT_MQTT_PASSWORD = "ZdqRI5U9ZqPmNguG"
+
+	API_HOST = "device.shop.ijooz.sg"
+	API_AUTH = "BgdLPcVjGtJccE8u6DrGF9ZQiSuMFmzX"
+
+	VERSION = "1.20260715.D"
 )
 
 type ApiReturn struct {

@@ -18,30 +18,55 @@ func init() {
 }
 
 func InitConfig() {
-	cfg, err := config.ReadDefault(GetCurPath() + "/config/config.ini")
-	checkErr(err)
+	Config = defaultConfig()
 
-	cameraType, err := cfg.String("common", "camera_type")
-	checkErr(err)
-	cameraCount, err := cfg.String("common", "camera_count")
-	checkErr(err)
-	lockType, err := cfg.String("common", "lock_type")
-	checkErr(err)
-	model, err := cfg.String("common", "model")
-	checkErr(err)
-	sn, err := cfg.String("common", "sn")
-	checkErr(err)
+	cfg, err := config.ReadDefault(CONFIG_FILE_PATH)
+	if err != nil {
+		alog.Log.Println("InitConfig: using defaults, config not loaded:", CONFIG_FILE_PATH, err)
+	} else {
+		readConfigValue(cfg, "common", "model", "MODEL")
+		readConfigValue(cfg, "common", "sn", "SN")
+		readConfigValue(cfg, "network", "a_ip", "A_IP")
+		readConfigValue(cfg, "network", "a_port", "A_PORT")
+		readConfigValue(cfg, "network", "b_ip", "B_IP")
+		readConfigValue(cfg, "network", "b_port", "B_PORT")
+		readConfigValue(cfg, "serial", "serial1", "SERIAL1")
+		readConfigValue(cfg, "serial", "serial2", "SERIAL2")
+		readConfigValue(cfg, "serial", "baudrate", "BAUDRATE")
+		readConfigValue(cfg, "mqtt", "host", "MQTT_HOST")
+		readConfigValue(cfg, "mqtt", "port", "MQTT_PORT")
+		readConfigValue(cfg, "mqtt", "username", "MQTT_USERNAME")
+		readConfigValue(cfg, "mqtt", "password", "MQTT_PASSWORD")
+	}
 
-	Config = map[string]string{}
-	Config["CAMERA_TYPE"] = cameraType
-	Config["CAMERA_COUNT"] = cameraCount
-	Config["LOCK_TYPE"] = lockType
-	Config["MODEL"] = model
-	Config["SN"] = sn
+	IsPubDualDoorMod = false
+	alog.Log.Println("InitConfig loaded:", Config["MODEL"], Config["SN"])
+	CreateSnFile(false, Config["SN"])
+}
 
-	IsPubDualDoorMod = strings.Contains(model, "IGO-668")
-	alog.Log.Println(model)
-	CreateSnFile(false, sn)
+func defaultConfig() map[string]string {
+	return map[string]string{
+		"SN":            DEFAULT_SN,
+		"MODEL":         DEFAULT_MODEL,
+		"A_IP":          DEFAULT_A_IP,
+		"A_PORT":        DEFAULT_A_PORT,
+		"B_IP":          DEFAULT_B_IP,
+		"B_PORT":        DEFAULT_B_PORT,
+		"SERIAL1":       DEFAULT_SERIAL1,
+		"SERIAL2":       DEFAULT_SERIAL2,
+		"BAUDRATE":      DEFAULT_BAUDRATE,
+		"MQTT_HOST":     DEFAULT_MQTT_HOST,
+		"MQTT_PORT":     DEFAULT_MQTT_PORT,
+		"MQTT_USERNAME": DEFAULT_MQTT_USERNAME,
+		"MQTT_PASSWORD": DEFAULT_MQTT_PASSWORD,
+	}
+}
+
+func readConfigValue(cfg *config.Config, section string, option string, key string) {
+	value, err := cfg.String(section, option)
+	if err == nil && strings.TrimSpace(value) != "" {
+		Config[key] = strings.TrimSpace(value)
+	}
 }
 
 func checkErr(err error) {

@@ -17,12 +17,12 @@ func main() {
 	public.CheckSdCardMounted()
 	public.InitConfig()
 
-	server := fmt.Sprintf("tcp://%s:%s", public.MQTT_HOST, public.MQTT_PORT)
+	server := fmt.Sprintf("tcp://%s:%s", public.Config["MQTT_HOST"], public.Config["MQTT_PORT"])
 	topic1 := fmt.Sprintf("/IGO/DEVICE/%s", public.Config["SN"])
 	topic2 := fmt.Sprintf("/IGO/MODELS/%s", public.Config["MODEL"])
 
 	go service.SerialBridgeStart()
 	go service.CmdStart()
 
-	service.MqttStart(server, public.Config["SN"], public.MQTT_USERNAME, public.MQTT_PASSWORD, topic1, topic2, 2)
+	service.MqttStart(server, public.Config["SN"], public.Config["MQTT_USERNAME"], public.Config["MQTT_PASSWORD"], topic1, topic2, 2)
 }
