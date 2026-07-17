@@ -30,10 +30,6 @@ func TCPClientStart() {
 	}
 }
 
-func UDPModeStart() {
-	alog.Log.Println("UDP mode init done: pending mode:", public.AppConfig.Network.UDPMode)
-}
-
 func dialTCPServer(address string) (net.Conn, error) {
 	dialer := net.Dialer{
 		Timeout:   5 * time.Second,
@@ -50,7 +46,7 @@ func handleTCPServer(conn net.Conn) {
 		n, err := conn.Read(buf)
 		if n > 0 {
 			data := append([]byte(nil), buf[:n]...)
-			alog.Log.Println("TCP RX:", formatTCPData(data), "len:", n)
+			alog.Log.Println("TCP RX:", formatNetData(data), "len:", n)
 			if err := writeTCPResponse(conn); err != nil {
 				alog.Log.Println("TCP TX fail:", err)
 				return
@@ -84,6 +80,6 @@ func tcpReconnectDelay() time.Duration {
 	return time.Duration(seconds) * time.Second
 }
 
-func formatTCPData(data []byte) string {
+func formatNetData(data []byte) string {
 	return fmt.Sprintf("%q", string(data))
 }

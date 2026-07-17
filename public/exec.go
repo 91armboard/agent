@@ -34,6 +34,10 @@ type NetworkConfig struct {
 	TCPServerPort   string `json:"tcp_server_port"`
 	TCPReconnectSec string `json:"tcp_reconnect_sec"`
 	UDPMode         string `json:"udp_mode"`
+	UDPTargetIP     string `json:"udp_target_ip"`
+	UDPTargetPort   string `json:"udp_target_port"`
+	UDPLocalPort    string `json:"udp_local_port"`
+	UDPSendInterval string `json:"udp_send_interval_sec"`
 }
 
 type SerialConfig struct {
@@ -88,6 +92,10 @@ func defaultAgentConfig() AgentConfig {
 			TCPServerPort:   DEFAULT_TCP_SERVER_PORT,
 			TCPReconnectSec: DEFAULT_TCP_RECONNECT_SEC,
 			UDPMode:         DEFAULT_UDP_MODE,
+			UDPTargetIP:     DEFAULT_UDP_TARGET_IP,
+			UDPTargetPort:   DEFAULT_UDP_TARGET_PORT,
+			UDPLocalPort:    DEFAULT_UDP_LOCAL_PORT,
+			UDPSendInterval: DEFAULT_UDP_SEND_INTERVAL_SEC,
 		},
 		Serial: SerialConfig{
 			Serial1:     DEFAULT_SERIAL1,
@@ -126,6 +134,10 @@ func loadINIConfig(fileName string, cfgOut *AgentConfig) bool {
 	setINIString(cfg, "network", "tcp_server_port", &cfgOut.Network.TCPServerPort)
 	setINIString(cfg, "network", "tcp_reconnect_sec", &cfgOut.Network.TCPReconnectSec)
 	setINIString(cfg, "network", "udp_mode", &cfgOut.Network.UDPMode)
+	setINIString(cfg, "network", "udp_target_ip", &cfgOut.Network.UDPTargetIP)
+	setINIString(cfg, "network", "udp_target_port", &cfgOut.Network.UDPTargetPort)
+	setINIString(cfg, "network", "udp_local_port", &cfgOut.Network.UDPLocalPort)
+	setINIString(cfg, "network", "udp_send_interval_sec", &cfgOut.Network.UDPSendInterval)
 
 	setINIString(cfg, "serial", "serial1", &cfgOut.Serial.Serial1)
 	setINIString(cfg, "serial", "serial2", &cfgOut.Serial.Serial2)
@@ -153,28 +165,32 @@ func setINIString(cfg *config.Config, section string, option string, target *str
 
 func (cfg AgentConfig) ToMap() map[string]string {
 	return map[string]string{
-		"SN":                   cfg.Common.SN,
-		"MODEL":                cfg.Common.Model,
-		"CAMERA_TYPE":          cfg.Common.CameraType,
-		"CAMERA_COUNT":         cfg.Common.CameraCount,
-		"LOCK_TYPE":            cfg.Common.LockType,
-		"A_IP":                 cfg.Network.AIP,
-		"A_PORT":               cfg.Network.APort,
-		"B_IP":                 cfg.Network.BIP,
-		"B_PORT":               cfg.Network.BPort,
-		"TCP_SERVER_IP":        cfg.Network.TCPServerIP,
-		"TCP_SERVER_PORT":      cfg.Network.TCPServerPort,
-		"TCP_RECONNECT_SEC":    cfg.Network.TCPReconnectSec,
-		"UDP_MODE":             cfg.Network.UDPMode,
-		"SERIAL1":              cfg.Serial.Serial1,
-		"SERIAL2":              cfg.Serial.Serial2,
-		"BAUDRATE":             cfg.Serial.BaudRate,
-		"SERIAL_BUFFER_SIZE":   cfg.Serial.BufferSize,
-		"SERIAL_FRAME_IDLE_MS": cfg.Serial.FrameIdleMs,
-		"MQTT_HOST":            cfg.MQTT.Host,
-		"MQTT_PORT":            cfg.MQTT.Port,
-		"MQTT_USERNAME":        cfg.MQTT.Username,
-		"MQTT_PASSWORD":        cfg.MQTT.Password,
+		"SN":                    cfg.Common.SN,
+		"MODEL":                 cfg.Common.Model,
+		"CAMERA_TYPE":           cfg.Common.CameraType,
+		"CAMERA_COUNT":          cfg.Common.CameraCount,
+		"LOCK_TYPE":             cfg.Common.LockType,
+		"A_IP":                  cfg.Network.AIP,
+		"A_PORT":                cfg.Network.APort,
+		"B_IP":                  cfg.Network.BIP,
+		"B_PORT":                cfg.Network.BPort,
+		"TCP_SERVER_IP":         cfg.Network.TCPServerIP,
+		"TCP_SERVER_PORT":       cfg.Network.TCPServerPort,
+		"TCP_RECONNECT_SEC":     cfg.Network.TCPReconnectSec,
+		"UDP_MODE":              cfg.Network.UDPMode,
+		"UDP_TARGET_IP":         cfg.Network.UDPTargetIP,
+		"UDP_TARGET_PORT":       cfg.Network.UDPTargetPort,
+		"UDP_LOCAL_PORT":        cfg.Network.UDPLocalPort,
+		"UDP_SEND_INTERVAL_SEC": cfg.Network.UDPSendInterval,
+		"SERIAL1":               cfg.Serial.Serial1,
+		"SERIAL2":               cfg.Serial.Serial2,
+		"BAUDRATE":              cfg.Serial.BaudRate,
+		"SERIAL_BUFFER_SIZE":    cfg.Serial.BufferSize,
+		"SERIAL_FRAME_IDLE_MS":  cfg.Serial.FrameIdleMs,
+		"MQTT_HOST":             cfg.MQTT.Host,
+		"MQTT_PORT":             cfg.MQTT.Port,
+		"MQTT_USERNAME":         cfg.MQTT.Username,
+		"MQTT_PASSWORD":         cfg.MQTT.Password,
 	}
 }
 
