@@ -26,15 +26,17 @@ const (
 	CONFIG_FILE_PATH       = "/etc/smartshop_go/config/config.ini"
 	CONFIG_LOCAL_FILE_PATH = "config/config.ini"
 
-	DEFAULT_SN       = "SN99999"
-	DEFAULT_MODEL    = "AGENT-MT7621"
-	DEFAULT_A_IP     = "192.168.16.8"
-	DEFAULT_A_PORT   = "5000"
-	DEFAULT_B_IP     = "192.168.188.123"
-	DEFAULT_B_PORT   = "5000"
-	DEFAULT_SERIAL1  = "/dev/ttyS1"
-	DEFAULT_SERIAL2  = "/dev/ttyS2"
-	DEFAULT_BAUDRATE = "115200"
+	DEFAULT_SN                   = "SN99999"
+	DEFAULT_MODEL                = "AGENT-MT7621"
+	DEFAULT_A_IP                 = "192.168.16.8"
+	DEFAULT_A_PORT               = "5000"
+	DEFAULT_B_IP                 = "192.168.188.123"
+	DEFAULT_B_PORT               = "5000"
+	DEFAULT_SERIAL1              = "/dev/ttyS1"
+	DEFAULT_SERIAL2              = "/dev/ttyS2"
+	DEFAULT_BAUDRATE             = "115200"
+	DEFAULT_SERIAL_BUFFER_SIZE   = "1024"
+	DEFAULT_SERIAL_FRAME_IDLE_MS = "50"
 
 	DEFAULT_MQTT_HOST     = "mqtt.shop.ijooz.sg"
 	DEFAULT_MQTT_PORT     = "1883"
@@ -44,7 +46,7 @@ const (
 	API_HOST = "device.shop.ijooz.sg"
 	API_AUTH = "BgdLPcVjGtJccE8u6DrGF9ZQiSuMFmzX"
 
-	VERSION = "1.20260715.K"
+	VERSION = "1.20260717.A"
 )
 
 type ApiReturn struct {

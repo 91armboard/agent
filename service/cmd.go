@@ -16,7 +16,7 @@ func init() {
 func onCmdChannel(ch chan string) {
 	for {
 		input := <-ch
-		inputs := strings.Split(input, ":")
+		inputs := strings.SplitN(input, ":", 2)
 		if len(inputs) == 2 {
 			doCmd(inputs[0], inputs[1])
 		}
@@ -60,7 +60,7 @@ func doCmd(action string, sdata string) {
 		sendCmdResult(action, map[string]string{"result": result})
 	default:
 		alog.Log.Println("Unsupported command:", action)
-		public.SendMqttError(public.TYPE_CMD, public.ERROR_PARAM, "")
+		public.SendMqttStatus(public.TYPE_CMD, public.ACTION_ERROR, public.ERROR_PARAM, "")
 	}
 	time.Sleep(10 * time.Millisecond)
 }

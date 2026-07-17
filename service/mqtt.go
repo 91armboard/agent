@@ -17,7 +17,7 @@ import (
 func onMqttChannel(ch chan string, client MQTT.Client) {
 	for {
 		input := <-ch
-		inputs := strings.Split(input, ":")
+		inputs := strings.SplitN(input, ":", 3)
 		if len(inputs) == 3 && inputs[0] == public.CHANNEL_TYPE_MQTT {
 			client.Publish(inputs[1], 1, false, inputs[2])
 		}
@@ -48,7 +48,7 @@ func onMqttMessage(client MQTT.Client, message MQTT.Message) {
 	}
 
 	alog.Log.Println("MQTT MSG ignored:", sType, sAction, sData)
-	client.Publish(public.TOPIC_STATUS_DEVICE+public.Config["SN"], 1, false, public.TYPE_DEVICE+public.ACTION_ERROR+public.ERROR_PARAM)
+	public.SendMqttStatus(public.TYPE_DEVICE, public.ACTION_ERROR, public.ERROR_PARAM, "")
 }
 
 func MqttStart(server string, clientid string, username string, password string, topic1 string, topic2 string, qos int) {

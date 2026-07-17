@@ -29,16 +29,6 @@ func SendMqttStatus(cType, cAction, cData, cId string) {
 	}
 }
 
-func SendMqttError(cType string, cErrorCode, cId string) {
-	if cType == TYPE_DEVICE {
-		ChMqtt <- fmt.Sprintf("%s:%s:%s", CHANNEL_TYPE_MQTT, TOPIC_STATUS_DEVICE+Config["SN"], TYPE_DEVICE+ACTION_ERROR+cErrorCode)
-	} else if cType == TYPE_CMD {
-		ChMqtt <- fmt.Sprintf("%s:%s:%s", CHANNEL_TYPE_MQTT, TOPIC_STATUS_CMD+Config["SN"], TYPE_CMD+ACTION_ERROR+cErrorCode)
-	} else {
-		ChMqtt <- fmt.Sprintf("%s:%s:%s", CHANNEL_TYPE_MQTT, TOPIC_STATUS_OTHER, TYPE_OTHER+ACTION_ERROR+cErrorCode)
-	}
-}
-
 func HttpRequest(method, url string, data map[string]string) (error, int, []byte) {
 	// return nil, 200, nil
 	/*ctx, cancel := context.WithCancel(context.TODO())

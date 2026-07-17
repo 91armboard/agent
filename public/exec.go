@@ -33,9 +33,11 @@ type NetworkConfig struct {
 }
 
 type SerialConfig struct {
-	Serial1  string `json:"serial1"`
-	Serial2  string `json:"serial2"`
-	BaudRate string `json:"baudrate"`
+	Serial1     string `json:"serial1"`
+	Serial2     string `json:"serial2"`
+	BaudRate    string `json:"baudrate"`
+	BufferSize  string `json:"buffer_size"`
+	FrameIdleMs string `json:"frame_idle_ms"`
 }
 
 type MQTTConfig struct {
@@ -80,9 +82,11 @@ func defaultAgentConfig() AgentConfig {
 			BPort: DEFAULT_B_PORT,
 		},
 		Serial: SerialConfig{
-			Serial1:  DEFAULT_SERIAL1,
-			Serial2:  DEFAULT_SERIAL2,
-			BaudRate: DEFAULT_BAUDRATE,
+			Serial1:     DEFAULT_SERIAL1,
+			Serial2:     DEFAULT_SERIAL2,
+			BaudRate:    DEFAULT_BAUDRATE,
+			BufferSize:  DEFAULT_SERIAL_BUFFER_SIZE,
+			FrameIdleMs: DEFAULT_SERIAL_FRAME_IDLE_MS,
 		},
 		MQTT: MQTTConfig{
 			Host:     DEFAULT_MQTT_HOST,
@@ -114,6 +118,8 @@ func loadINIConfig(fileName string, cfgOut *AgentConfig) bool {
 	setINIString(cfg, "serial", "serial1", &cfgOut.Serial.Serial1)
 	setINIString(cfg, "serial", "serial2", &cfgOut.Serial.Serial2)
 	setINIString(cfg, "serial", "baudrate", &cfgOut.Serial.BaudRate)
+	setINIString(cfg, "serial", "buffer_size", &cfgOut.Serial.BufferSize)
+	setINIString(cfg, "serial", "frame_idle_ms", &cfgOut.Serial.FrameIdleMs)
 
 	setINIString(cfg, "mqtt", "host", &cfgOut.MQTT.Host)
 	setINIString(cfg, "mqtt", "port", &cfgOut.MQTT.Port)
@@ -135,22 +141,24 @@ func setINIString(cfg *config.Config, section string, option string, target *str
 
 func (cfg AgentConfig) ToMap() map[string]string {
 	return map[string]string{
-		"SN":            cfg.Common.SN,
-		"MODEL":         cfg.Common.Model,
-		"CAMERA_TYPE":   cfg.Common.CameraType,
-		"CAMERA_COUNT":  cfg.Common.CameraCount,
-		"LOCK_TYPE":     cfg.Common.LockType,
-		"A_IP":          cfg.Network.AIP,
-		"A_PORT":        cfg.Network.APort,
-		"B_IP":          cfg.Network.BIP,
-		"B_PORT":        cfg.Network.BPort,
-		"SERIAL1":       cfg.Serial.Serial1,
-		"SERIAL2":       cfg.Serial.Serial2,
-		"BAUDRATE":      cfg.Serial.BaudRate,
-		"MQTT_HOST":     cfg.MQTT.Host,
-		"MQTT_PORT":     cfg.MQTT.Port,
-		"MQTT_USERNAME": cfg.MQTT.Username,
-		"MQTT_PASSWORD": cfg.MQTT.Password,
+		"SN":                   cfg.Common.SN,
+		"MODEL":                cfg.Common.Model,
+		"CAMERA_TYPE":          cfg.Common.CameraType,
+		"CAMERA_COUNT":         cfg.Common.CameraCount,
+		"LOCK_TYPE":            cfg.Common.LockType,
+		"A_IP":                 cfg.Network.AIP,
+		"A_PORT":               cfg.Network.APort,
+		"B_IP":                 cfg.Network.BIP,
+		"B_PORT":               cfg.Network.BPort,
+		"SERIAL1":              cfg.Serial.Serial1,
+		"SERIAL2":              cfg.Serial.Serial2,
+		"BAUDRATE":             cfg.Serial.BaudRate,
+		"SERIAL_BUFFER_SIZE":   cfg.Serial.BufferSize,
+		"SERIAL_FRAME_IDLE_MS": cfg.Serial.FrameIdleMs,
+		"MQTT_HOST":            cfg.MQTT.Host,
+		"MQTT_PORT":            cfg.MQTT.Port,
+		"MQTT_USERNAME":        cfg.MQTT.Username,
+		"MQTT_PASSWORD":        cfg.MQTT.Password,
 	}
 }
 

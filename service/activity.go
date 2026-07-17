@@ -7,7 +7,7 @@ import (
 
 func HandleActivityCommand(action string, data string) {
 	alog.Log.Println("Activity command ignored:", action, data)
-	public.SendMqttError(public.TYPE_CMD, public.ERROR_PARAM, "")
+	public.SendMqttStatus(public.TYPE_CMD, public.ACTION_ERROR, public.ERROR_PARAM, "")
 }
 
 func ActivityStartNow(activityID string) {
