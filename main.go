@@ -25,6 +25,8 @@ func main() {
 
 	go service.SerialBridgeStart()
 	go service.CmdStart()
+	go service.TCPClientStart()
+	go service.UDPModeStart()
 
 	service.MqttStart(server, public.AppConfig.Common.SN, public.AppConfig.MQTT.Username, public.AppConfig.MQTT.Password, topic1, topic2, 2)
 }

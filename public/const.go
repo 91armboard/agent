@@ -32,6 +32,10 @@ const (
 	DEFAULT_A_PORT               = "5000"
 	DEFAULT_B_IP                 = "192.168.188.123"
 	DEFAULT_B_PORT               = "5000"
+	DEFAULT_TCP_SERVER_IP        = "192.168.199.100"
+	DEFAULT_TCP_SERVER_PORT      = "8034"
+	DEFAULT_TCP_RECONNECT_SEC    = "5"
+	DEFAULT_UDP_MODE             = "enabled"
 	DEFAULT_SERIAL1              = "/dev/ttyS1"
 	DEFAULT_SERIAL2              = "/dev/ttyS2"
 	DEFAULT_BAUDRATE             = "115200"
@@ -46,7 +50,7 @@ const (
 	API_HOST = "device.shop.ijooz.sg"
 	API_AUTH = "BgdLPcVjGtJccE8u6DrGF9ZQiSuMFmzX"
 
-	VERSION = "1.20260717.B"
+	VERSION = "1.20260717.C"
 )
 
 type ApiReturn struct {

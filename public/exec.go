@@ -26,10 +26,14 @@ type CommonConfig struct {
 }
 
 type NetworkConfig struct {
-	AIP   string `json:"a_ip"`
-	APort string `json:"a_port"`
-	BIP   string `json:"b_ip"`
-	BPort string `json:"b_port"`
+	AIP             string `json:"a_ip"`
+	APort           string `json:"a_port"`
+	BIP             string `json:"b_ip"`
+	BPort           string `json:"b_port"`
+	TCPServerIP     string `json:"tcp_server_ip"`
+	TCPServerPort   string `json:"tcp_server_port"`
+	TCPReconnectSec string `json:"tcp_reconnect_sec"`
+	UDPMode         string `json:"udp_mode"`
 }
 
 type SerialConfig struct {
@@ -76,10 +80,14 @@ func defaultAgentConfig() AgentConfig {
 			LockType:    "haha",
 		},
 		Network: NetworkConfig{
-			AIP:   DEFAULT_A_IP,
-			APort: DEFAULT_A_PORT,
-			BIP:   DEFAULT_B_IP,
-			BPort: DEFAULT_B_PORT,
+			AIP:             DEFAULT_A_IP,
+			APort:           DEFAULT_A_PORT,
+			BIP:             DEFAULT_B_IP,
+			BPort:           DEFAULT_B_PORT,
+			TCPServerIP:     DEFAULT_TCP_SERVER_IP,
+			TCPServerPort:   DEFAULT_TCP_SERVER_PORT,
+			TCPReconnectSec: DEFAULT_TCP_RECONNECT_SEC,
+			UDPMode:         DEFAULT_UDP_MODE,
 		},
 		Serial: SerialConfig{
 			Serial1:     DEFAULT_SERIAL1,
@@ -114,6 +122,10 @@ func loadINIConfig(fileName string, cfgOut *AgentConfig) bool {
 	setINIString(cfg, "network", "a_port", &cfgOut.Network.APort)
 	setINIString(cfg, "network", "b_ip", &cfgOut.Network.BIP)
 	setINIString(cfg, "network", "b_port", &cfgOut.Network.BPort)
+	setINIString(cfg, "network", "tcp_server_ip", &cfgOut.Network.TCPServerIP)
+	setINIString(cfg, "network", "tcp_server_port", &cfgOut.Network.TCPServerPort)
+	setINIString(cfg, "network", "tcp_reconnect_sec", &cfgOut.Network.TCPReconnectSec)
+	setINIString(cfg, "network", "udp_mode", &cfgOut.Network.UDPMode)
 
 	setINIString(cfg, "serial", "serial1", &cfgOut.Serial.Serial1)
 	setINIString(cfg, "serial", "serial2", &cfgOut.Serial.Serial2)
@@ -150,6 +162,10 @@ func (cfg AgentConfig) ToMap() map[string]string {
 		"A_PORT":               cfg.Network.APort,
 		"B_IP":                 cfg.Network.BIP,
 		"B_PORT":               cfg.Network.BPort,
+		"TCP_SERVER_IP":        cfg.Network.TCPServerIP,
+		"TCP_SERVER_PORT":      cfg.Network.TCPServerPort,
+		"TCP_RECONNECT_SEC":    cfg.Network.TCPReconnectSec,
+		"UDP_MODE":             cfg.Network.UDPMode,
 		"SERIAL1":              cfg.Serial.Serial1,
 		"SERIAL2":              cfg.Serial.Serial2,
 		"BAUDRATE":             cfg.Serial.BaudRate,
