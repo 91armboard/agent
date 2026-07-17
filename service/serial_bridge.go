@@ -45,10 +45,10 @@ func SerialBridgeStart() {
 	alog.Log.Println("Serial COM2 init done: ok", com2Name, "baudrate:", baudRate, "N,8,1")
 	alog.Log.Println("Serial COM1 buffer init done: ok capacity:", com1Buffer.Capacity())
 	alog.Log.Println("Serial COM1 frame idle:", serialFrameIdle())
-	go serialHeartbeat(com1)
-	go serialTestData(com1)
+	rxFrameCh := make(chan []byte, 4)
+	go serialTxScheduler(com1, rxFrameCh)
 	go readSerialCOM1(com1, com1Buffer)
-	processSerialCOM1(com1Buffer)
+	processSerialCOM1(com1Buffer, rxFrameCh)
 }
 
 func readSerialCOM1(com1 *serial.Port, rxBuffer *serialRingBuffer) {
@@ -63,7 +63,7 @@ func readSerialCOM1(com1 *serial.Port, rxBuffer *serialRingBuffer) {
 	}
 }
 
-func processSerialCOM1(rxBuffer *serialRingBuffer) {
+func processSerialCOM1(rxBuffer *serialRingBuffer, rxFrameCh chan<- []byte) {
 	frameIdle := serialFrameIdle()
 	ticker := time.NewTicker(10 * time.Millisecond)
 	defer ticker.Stop()
@@ -79,34 +79,88 @@ func processSerialCOM1(rxBuffer *serialRingBuffer) {
 		}
 		if len(frame) > 0 && time.Since(lastDataAt) >= frameIdle {
 			logSerialRX(frame, rxBuffer.Len())
+			notifySerialFrame(rxFrameCh, frame)
 			frame = frame[:0]
 		}
 	}
 }
 
-func serialHeartbeat(com1 *serial.Port) {
-	ticker := time.NewTicker(5 * time.Second)
+func serialTxScheduler(com1 *serial.Port, rxFrameCh <-chan []byte) {
+	ticker := time.NewTicker(20 * time.Millisecond)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		heartbeat := []byte{0x02, 0x47, 0x33, 0x55, 0x55, 0x55, 0x55, 0x37, 0x34, 0x03}
-		writeSerialCOM1(com1, "HB", heartbeat)
+	nextHeartbeatAt := time.Now().Add(5 * time.Second)
+	nextTestAt := time.Now().Add(3 * time.Second)
+	lastTestAt := time.Time{}
+	testBlockedUntil := time.Time{}
+	heartbeatPending := false
+	heartbeatDeadline := time.Time{}
+	seq := 1
+
+	for {
+		select {
+		case frame := <-rxFrameCh:
+			if heartbeatPending && isVMLockFrame(frame) {
+				heartbeatPending = false
+				testBlockedUntil = time.Now().Add(50 * time.Millisecond)
+				alog.Log.Println("HB ACK len:", len(frame), "test_after:", testBlockedUntil.Format("15:04:05.000"))
+			}
+		case now := <-ticker.C:
+			if heartbeatPending && now.After(heartbeatDeadline) {
+				heartbeatPending = false
+				testBlockedUntil = now
+				alog.Log.Println("HB ACK timeout: test resumed")
+			}
+
+			if !heartbeatPending && !now.Before(nextHeartbeatAt) && canSendHeartbeat(now, lastTestAt) {
+				heartbeat := []byte{0x02, 0x47, 0x33, 0x55, 0x55, 0x55, 0x55, 0x37, 0x34, 0x03}
+				writeSerialCOM1(com1, "HB", heartbeat)
+				heartbeatPending = true
+				heartbeatDeadline = now.Add(1 * time.Second)
+				nextHeartbeatAt = now.Add(5 * time.Second)
+				continue
+			}
+
+			if !heartbeatPending && !now.Before(nextTestAt) && !now.Before(testBlockedUntil) {
+				payload := []byte(fmt.Sprintf("test %02d", seq))
+				writeSerialCOM1(com1, "TEST", payload)
+				lastTestAt = now
+				nextTestAt = now.Add(3 * time.Second)
+				seq++
+				if seq > 99 {
+					seq = 1
+				}
+			}
+		}
 	}
 }
 
-func serialTestData(com1 *serial.Port) {
-	ticker := time.NewTicker(3 * time.Second)
-	defer ticker.Stop()
-
-	seq := 1
-	for range ticker.C {
-		payload := []byte(fmt.Sprintf("test %02d", seq))
-		writeSerialCOM1(com1, "TEST", payload)
-		seq++
-		if seq > 99 {
-			seq = 1
-		}
+func notifySerialFrame(rxFrameCh chan<- []byte, frame []byte) {
+	copied := append([]byte(nil), frame...)
+	select {
+	case rxFrameCh <- copied:
+	default:
 	}
+}
+
+func canSendHeartbeat(now time.Time, lastTestAt time.Time) bool {
+	return lastTestAt.IsZero() || now.Sub(lastTestAt) >= 200*time.Millisecond
+}
+
+func isVMLockFrame(frame []byte) bool {
+	if len(frame) != 10 || frame[0] != 0x02 || frame[9] != 0x03 {
+		return false
+	}
+
+	crc := frame[1]
+	for i := 2; i <= 6; i++ {
+		crc ^= frame[i]
+	}
+	crcText := fmt.Sprintf("%X", crc)
+	if len(crcText) == 1 {
+		return frame[7] == crcText[0] && frame[8] == 0x00
+	}
+	return frame[7] == crcText[0] && frame[8] == crcText[1]
 }
 
 func writeSerialCOM1(com1 *serial.Port, label string, data []byte) {
