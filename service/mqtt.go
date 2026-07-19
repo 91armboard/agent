@@ -158,7 +158,3 @@ func waitForMqttRetry(c chan os.Signal, delay time.Duration) bool {
 		return false
 	}
 }
-
-func InitFFmpeg() {
-	alog.Log.Println("InitFFmpeg ignored: camera/FFmpeg flow is disabled")
-}

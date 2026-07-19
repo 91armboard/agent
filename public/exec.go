@@ -57,8 +57,6 @@ type MQTTConfig struct {
 
 func init() {
 	ChMqtt = make(chan string)
-	ChActivity = make(chan string)
-	ChUpload = make(chan string)
 	ChCmd = make(chan string)
 }
 
@@ -69,7 +67,6 @@ func InitConfig() {
 	}
 	Config = AppConfig.ToMap()
 
-	IsPubDualDoorMod = false
 	alog.Log.Println("Config init done: ok", AppConfig.Common.Model, AppConfig.Common.SN)
 	CreateSnFile(false, AppConfig.Common.SN)
 }
