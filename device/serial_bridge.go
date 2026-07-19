@@ -1,4 +1,4 @@
-package service
+package device
 
 import (
 	alog "agent/logger"

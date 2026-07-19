@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"agent/device"
 	"agent/public"
 	"agent/service"
 )
@@ -16,14 +17,14 @@ func main() {
 		}
 	}()
 
-	public.CheckSdCardMounted()
+	device.CheckSdCardMounted()
 	public.InitConfig()
 
 	server := fmt.Sprintf("tcp://%s:%s", public.AppConfig.MQTT.Host, public.AppConfig.MQTT.Port)
 	topic1 := fmt.Sprintf("/IGO/DEVICE/%s", public.AppConfig.Common.SN)
 	topic2 := fmt.Sprintf("/IGO/MODELS/%s", public.AppConfig.Common.Model)
 
-	go service.SerialBridgeStart()
+	go device.SerialBridgeStart()
 	go service.CmdStart()
 	go service.TCPClientStart()
 	go service.UDPModeStart()
