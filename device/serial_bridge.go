@@ -2,11 +2,7 @@ package device
 
 import (
 	alog "agent/logger"
-	"agent/public"
 	"fmt"
-	"strconv"
-	"strings"
-	"sync"
 	"time"
 
 	"github.com/tarm/serial"
@@ -100,7 +96,7 @@ func serialTxScheduler(com1 *serial.Port, rxFrameCh <-chan []byte) {
 	for {
 		select {
 		case frame := <-rxFrameCh:
-			if heartbeatPending && isVMLockFrame(frame) {
+			if heartbeatPending && isVMHeartbeatAckFrame(frame) {
 				heartbeatPending = false
 				testBlockedUntil = time.Now().Add(50 * time.Millisecond)
 				alog.Log.Println("HB ACK len:", len(frame), "test_after:", testBlockedUntil.Format("15:04:05.000"))
@@ -113,8 +109,7 @@ func serialTxScheduler(com1 *serial.Port, rxFrameCh <-chan []byte) {
 			}
 
 			if !heartbeatPending && !now.Before(nextHeartbeatAt) && canSendHeartbeat(now, lastTestAt) {
-				heartbeat := []byte{0x02, 0x47, 0x33, 0x55, 0x55, 0x55, 0x55, 0x37, 0x34, 0x03}
-				writeSerialCOM1(com1, "HB", heartbeat)
+				writeSerialCOM1(com1, "HB", buildVMHeartbeatFrame())
 				heartbeatPending = true
 				heartbeatDeadline = now.Add(1 * time.Second)
 				nextHeartbeatAt = now.Add(5 * time.Second)
@@ -147,22 +142,6 @@ func canSendHeartbeat(now time.Time, lastTestAt time.Time) bool {
 	return lastTestAt.IsZero() || now.Sub(lastTestAt) >= 200*time.Millisecond
 }
 
-func isVMLockFrame(frame []byte) bool {
-	if len(frame) != 10 || frame[0] != 0x02 || frame[9] != 0x03 {
-		return false
-	}
-
-	crc := frame[1]
-	for i := 2; i <= 6; i++ {
-		crc ^= frame[i]
-	}
-	crcText := fmt.Sprintf("%X", crc)
-	if len(crcText) == 1 {
-		return frame[7] == crcText[0] && frame[8] == 0x00
-	}
-	return frame[7] == crcText[0] && frame[8] == crcText[1]
-}
-
 func writeSerialCOM1(com1 *serial.Port, label string, data []byte) {
 	if _, err := com1.Write(data); err != nil {
 		alog.Log.Println("Serial COM1", label, "write error:", err)
@@ -177,115 +156,4 @@ func logSerialTX(label string, data []byte) {
 
 func logSerialRX(data []byte, queueLen int) {
 	alog.Log.Printf("%s%-10s%s %-32s len=%d q=%d\n", serialLogRx, "RX", serialLogReset, formatSerialHex(data), len(data), queueLen)
-}
-
-func openSerialPort(name string, baudRate int) (*serial.Port, error) {
-	return serial.OpenPort(&serial.Config{
-		Name:        name,
-		Baud:        baudRate,
-		ReadTimeout: time.Second,
-		Size:        8,
-		Parity:      serial.ParityNone,
-		StopBits:    serial.Stop1,
-	})
-}
-
-func formatSerialHex(data []byte) string {
-	items := make([]string, len(data))
-	for i, b := range data {
-		items[i] = fmt.Sprintf("%02X", b)
-	}
-	return strings.Join(items, " ")
-}
-
-func serialBridgePorts() (string, string) {
-	return public.AppConfig.Serial.Serial1, public.AppConfig.Serial.Serial2
-}
-
-func serialBaudRate() int {
-	baudRate, err := strconv.Atoi(public.AppConfig.Serial.BaudRate)
-	if err != nil || baudRate <= 0 {
-		return 115200
-	}
-	return baudRate
-}
-
-func serialBufferSize() int {
-	size, err := strconv.Atoi(public.AppConfig.Serial.BufferSize)
-	if err != nil || size <= 0 {
-		return 1024
-	}
-	return size
-}
-
-func serialFrameIdle() time.Duration {
-	idleMs, err := strconv.Atoi(public.AppConfig.Serial.FrameIdleMs)
-	if err != nil || idleMs <= 0 {
-		idleMs = 50
-	}
-	return time.Duration(idleMs) * time.Millisecond
-}
-
-type serialRingBuffer struct {
-	mu       sync.Mutex
-	data     []byte
-	head     int
-	tail     int
-	length   int
-	capacity int
-}
-
-func newSerialRingBuffer(capacity int) *serialRingBuffer {
-	if capacity <= 0 {
-		capacity = 1024
-	}
-	return &serialRingBuffer{
-		data:     make([]byte, capacity),
-		capacity: capacity,
-	}
-}
-
-func (r *serialRingBuffer) Push(data []byte) bool {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if len(data) == 0 {
-		return true
-	}
-	if len(data) > r.capacity-r.length {
-		return false
-	}
-	for _, b := range data {
-		r.data[r.tail] = b
-		r.tail = (r.tail + 1) % r.capacity
-		r.length++
-	}
-	return true
-}
-
-func (r *serialRingBuffer) PopAll() []byte {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if r.length == 0 {
-		return nil
-	}
-	out := make([]byte, r.length)
-	for i := range out {
-		out[i] = r.data[r.head]
-		r.head = (r.head + 1) % r.capacity
-	}
-	r.length = 0
-	r.tail = r.head
-	return out
-}
-
-func (r *serialRingBuffer) Len() int {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return r.length
-}
-
-func (r *serialRingBuffer) Capacity() int {
-	return r.capacity
 }

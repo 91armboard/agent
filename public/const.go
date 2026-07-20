@@ -51,14 +51,5 @@ const (
 	DEFAULT_MQTT_USERNAME = "agent"
 	DEFAULT_MQTT_PASSWORD = "ZdqRI5U9ZqPmNguG"
 
-	API_HOST = "device.shop.ijooz.sg"
-	API_AUTH = "BgdLPcVjGtJccE8u6DrGF9ZQiSuMFmzX"
-
-	VERSION = "1.20260717.D"
+	VERSION = "1.20260720.A"
 )
-
-type ApiReturn struct {
-	Code int    `json:"code"`
-	Info string `json:"info"`
-	Data string `json:"data,omitempty"`
-}

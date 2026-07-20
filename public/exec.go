@@ -3,7 +3,6 @@ package public
 import (
 	alog "agent/logger"
 	"encoding/json"
-	"io"
 	"os"
 	"strings"
 
@@ -18,11 +17,8 @@ type AgentConfig struct {
 }
 
 type CommonConfig struct {
-	Model       string `json:"model"`
-	SN          string `json:"sn"`
-	CameraType  string `json:"camera_type,omitempty"`
-	CameraCount string `json:"camera_count,omitempty"`
-	LockType    string `json:"lock_type,omitempty"`
+	Model string `json:"model"`
+	SN    string `json:"sn"`
 }
 
 type NetworkConfig struct {
@@ -74,11 +70,8 @@ func InitConfig() {
 func defaultAgentConfig() AgentConfig {
 	return AgentConfig{
 		Common: CommonConfig{
-			Model:       DEFAULT_MODEL,
-			SN:          DEFAULT_SN,
-			CameraType:  "haha",
-			CameraCount: "2",
-			LockType:    "haha",
+			Model: DEFAULT_MODEL,
+			SN:    DEFAULT_SN,
 		},
 		Network: NetworkConfig{
 			AIP:             DEFAULT_A_IP,
@@ -119,9 +112,6 @@ func loadINIConfig(fileName string, cfgOut *AgentConfig) bool {
 
 	setINIString(cfg, "common", "model", &cfgOut.Common.Model)
 	setINIString(cfg, "common", "sn", &cfgOut.Common.SN)
-	setINIString(cfg, "common", "camera_type", &cfgOut.Common.CameraType)
-	setINIString(cfg, "common", "camera_count", &cfgOut.Common.CameraCount)
-	setINIString(cfg, "common", "lock_type", &cfgOut.Common.LockType)
 
 	setINIString(cfg, "network", "a_ip", &cfgOut.Network.AIP)
 	setINIString(cfg, "network", "a_port", &cfgOut.Network.APort)
@@ -164,9 +154,6 @@ func (cfg AgentConfig) ToMap() map[string]string {
 	return map[string]string{
 		"SN":                    cfg.Common.SN,
 		"MODEL":                 cfg.Common.Model,
-		"CAMERA_TYPE":           cfg.Common.CameraType,
-		"CAMERA_COUNT":          cfg.Common.CameraCount,
-		"LOCK_TYPE":             cfg.Common.LockType,
 		"A_IP":                  cfg.Network.AIP,
 		"A_PORT":                cfg.Network.APort,
 		"B_IP":                  cfg.Network.BIP,
@@ -191,27 +178,8 @@ func (cfg AgentConfig) ToMap() map[string]string {
 	}
 }
 
-func checkErr(err error) {
-	if err != nil {
-		alog.Log.Println(err)
-		os.Exit(-1)
-	}
-}
-
-func setFrpIni(fileName, sn string) {
-	f, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE, 0766)
-	if err != nil {
-		alog.Log.Println("READ FRP INI ERROR!")
-	}
-	fileContent, err := io.ReadAll(f)
-	temp := strings.Replace(string(fileContent), "{SN}", sn, -1)
-	if os.WriteFile(fileName, []byte(temp), 0766) != nil {
-		alog.Log.Println("WRITE FRP INI ERROR!")
-	}
-}
-
 func CreateSnFile(again bool, strsn string) {
-	if !IsExist("/www/sn.json") {
+	if !fileExists("/www/sn.json") {
 		again = true
 		alog.Log.Println("SN file init pending: missing /www/sn.json")
 	}
@@ -233,4 +201,9 @@ func CreateSnFile(again bool, strsn string) {
 		return
 	}
 	alog.Log.Println("SN file init done: ok existing")
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil || os.IsExist(err)
 }
