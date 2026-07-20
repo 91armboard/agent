@@ -14,6 +14,21 @@ import (
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 )
 
+var mqttPublishCh = make(chan string)
+var cmdCh = make(chan string)
+
+func sendMqttStatus(cType, cAction, cData string) {
+	if cType == public.TYPE_DEVICE {
+		mqttPublishCh <- fmt.Sprintf("%s:%s:%s", public.CHANNEL_TYPE_MQTT, public.TOPIC_STATUS_DEVICE+public.AppConfig.Common.SN, public.TYPE_DEVICE+cAction+cData)
+		return
+	}
+	if cType == public.TYPE_CMD {
+		mqttPublishCh <- fmt.Sprintf("%s:%s:%s", public.CHANNEL_TYPE_MQTT, public.TOPIC_STATUS_CMD+public.AppConfig.Common.SN, public.TYPE_CMD+cAction+cData)
+		return
+	}
+	mqttPublishCh <- fmt.Sprintf("%s:%s:%s", public.CHANNEL_TYPE_MQTT, public.TOPIC_STATUS_OTHER, public.TYPE_OTHER+cAction+cData)
+}
+
 func onMqttChannel(ch chan string, client MQTT.Client) {
 	for {
 		input := <-ch
@@ -42,13 +57,13 @@ func onMqttMessage(client MQTT.Client, message MQTT.Message) {
 	sAction := string(msg[2:4])
 	sData := string(msg[4:])
 	if sType == public.TYPE_CMD {
-		public.ChCmd <- fmt.Sprintf("%s:%s", sAction, sData)
+		cmdCh <- fmt.Sprintf("%s:%s", sAction, sData)
 		alog.Log.Println("TYPE_CMD:", sAction, sData)
 		return
 	}
 
 	alog.Log.Println("MQTT MSG ignored:", sType, sAction, sData)
-	public.SendMqttStatus(public.TYPE_DEVICE, public.ACTION_ERROR, public.ERROR_PARAM, "")
+	sendMqttStatus(public.TYPE_DEVICE, public.ACTION_ERROR, public.ERROR_PARAM)
 }
 
 func MqttStart(server string, clientid string, username string, password string, topic1 string, topic2 string, qos int) {
@@ -95,7 +110,7 @@ func MqttStart(server string, clientid string, username string, password string,
 			}
 			dataStr, err := json.Marshal(&data)
 			if err == nil {
-				public.SendMqttStatus(public.TYPE_DEVICE, public.ACTION_STARTRUN, string(dataStr), "")
+				sendMqttStatus(public.TYPE_DEVICE, public.ACTION_STARTRUN, string(dataStr))
 			}
 			alog.Log.Println("Inform agent is running by MQTT")
 		})
@@ -110,7 +125,7 @@ func MqttStart(server string, clientid string, username string, password string,
 	}
 
 	client := MQTT.NewClient(connOpts)
-	go onMqttChannel(public.ChMqtt, client)
+	go onMqttChannel(mqttPublishCh, client)
 
 	failures := 0
 	for {

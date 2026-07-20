@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	go onCmdChannel(public.ChCmd)
+	go onCmdChannel(cmdCh)
 }
 
 func onCmdChannel(ch chan string) {
@@ -60,7 +60,7 @@ func doCmd(action string, sdata string) {
 		sendCmdResult(action, map[string]string{"result": result})
 	default:
 		alog.Log.Println("Unsupported command:", action)
-		public.SendMqttStatus(public.TYPE_CMD, public.ACTION_ERROR, public.ERROR_PARAM, "")
+		sendMqttStatus(public.TYPE_CMD, public.ACTION_ERROR, public.ERROR_PARAM)
 	}
 	time.Sleep(10 * time.Millisecond)
 }
@@ -80,5 +80,5 @@ func sendCmdResult(action string, data interface{}) {
 		alog.Log.Println("sendCmdResult marshal error:", err)
 		return
 	}
-	public.SendMqttStatus(public.TYPE_CMD, action, string(dataStr), "")
+	sendMqttStatus(public.TYPE_CMD, action, string(dataStr))
 }

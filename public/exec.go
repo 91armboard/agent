@@ -51,17 +51,13 @@ type MQTTConfig struct {
 	Password string `json:"-"`
 }
 
-func init() {
-	ChMqtt = make(chan string)
-	ChCmd = make(chan string)
-}
+var AppConfig AgentConfig
 
 func InitConfig() {
 	AppConfig = defaultAgentConfig()
 	if !loadINIConfig(CONFIG_FILE_PATH, &AppConfig) {
 		loadINIConfig(CONFIG_LOCAL_FILE_PATH, &AppConfig)
 	}
-	Config = AppConfig.ToMap()
 
 	alog.Log.Println("Config init done: ok", AppConfig.Common.Model, AppConfig.Common.SN)
 	CreateSnFile(false, AppConfig.Common.SN)
@@ -147,34 +143,6 @@ func setINIString(cfg *config.Config, section string, option string, target *str
 		if value != "" {
 			*target = value
 		}
-	}
-}
-
-func (cfg AgentConfig) ToMap() map[string]string {
-	return map[string]string{
-		"SN":                    cfg.Common.SN,
-		"MODEL":                 cfg.Common.Model,
-		"A_IP":                  cfg.Network.AIP,
-		"A_PORT":                cfg.Network.APort,
-		"B_IP":                  cfg.Network.BIP,
-		"B_PORT":                cfg.Network.BPort,
-		"TCP_SERVER_IP":         cfg.Network.TCPServerIP,
-		"TCP_SERVER_PORT":       cfg.Network.TCPServerPort,
-		"TCP_RECONNECT_SEC":     cfg.Network.TCPReconnectSec,
-		"UDP_MODE":              cfg.Network.UDPMode,
-		"UDP_TARGET_IP":         cfg.Network.UDPTargetIP,
-		"UDP_TARGET_PORT":       cfg.Network.UDPTargetPort,
-		"UDP_LOCAL_PORT":        cfg.Network.UDPLocalPort,
-		"UDP_SEND_INTERVAL_SEC": cfg.Network.UDPSendInterval,
-		"SERIAL1":               cfg.Serial.Serial1,
-		"SERIAL2":               cfg.Serial.Serial2,
-		"BAUDRATE":              cfg.Serial.BaudRate,
-		"SERIAL_BUFFER_SIZE":    cfg.Serial.BufferSize,
-		"SERIAL_FRAME_IDLE_MS":  cfg.Serial.FrameIdleMs,
-		"MQTT_HOST":             cfg.MQTT.Host,
-		"MQTT_PORT":             cfg.MQTT.Port,
-		"MQTT_USERNAME":         cfg.MQTT.Username,
-		"MQTT_PASSWORD":         cfg.MQTT.Password,
 	}
 }
 
